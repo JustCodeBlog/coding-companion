@@ -10,6 +10,7 @@ import { IRepository } from '../models';
 import { Db, UpdatesService, VulnerabilitiesService } from '../services';
 
 class GitService extends events.EventEmitter {
+
   public static getInstance(): GitService {
     return GitService.instance;
   }
@@ -145,7 +146,7 @@ class GitService extends events.EventEmitter {
               this.disposeLocalRepo(localRepoPath);
 
               const updates = depsRes[0];
-              const vulns = depsRes[1].filter((v: any) => !_.isEmpty(v));
+              const vulns = depsRes[1].filter((v: any) => !_.isEmpty(v))[0];
 
               resolve({updates, vulns});
             })

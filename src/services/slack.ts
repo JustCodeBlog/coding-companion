@@ -27,7 +27,12 @@ class SlackClient extends events.EventEmitter {
 
   public sendMessage(conversationId: string, message: string) {
     this.rtm
-      .sendMessage(message, conversationId)
+      .send('message', {
+        channel: conversationId,
+        text: message,
+        mrkdwn: true
+      })
+      // .sendMessage(message, conversationId)
       // .then((res: any) => {
       //   console.log('Message sent: ', res.ts);
       // })

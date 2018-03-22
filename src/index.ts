@@ -38,28 +38,41 @@ languageProcessor.on(MessageProcessedEvent.LABEL, (data: any) => {
 });
 
 // Listen on Git client events
-git.on(GitEvent.GIT_EVENT, (data: any) => {
-  console.log('GENERIC GIT EVENT', data);
+git.on(GitEvent.GIT_EVENT, (evt: any) => {
+  console.log('GENERIC GIT EVENT', evt);
 });
-git.on(GitEvent.GIT_ERROR, (data: any) => {
-  console.log('GIT ERROR EVENT', data);
+git.on(GitEvent.GIT_ERROR, (evt: any) => {
+  console.log('GIT ERROR EVENT', evt);
 });
-git.on(GitEvent.PACKAGE_ANALYSIS, (data: any) => {
-  console.log('PACKAGE ANALYSIS EVENT', data);
-  const channel = data.channel;
-  const repo = data.repo;
+git.on(GitEvent.PACKAGE_ANALYSIS, (evt: any) => {
+  const channel = evt.channel;
+  const repo = evt.repo;
+  const data = evt.data;
 
   const depsMsg = languageProcessor.getResponse('GIT_DEPENDENCIES_UPDATES');
-  const depsList = '';
+  let depsList = '';
   const vulnsMsg = languageProcessor.getResponse('GIT_VULNERABILITIES');
-  const vulnsList = '';
+  let vulnsList = '';
+
   _.each(data.vulns, vuln => {
-    //
+    vulnsList += `*${vuln.path[0]}* => ${vuln.module} ${vuln.version} (CVSS Score ${vuln.cvss_score}) - *fixed* @ ${vuln.patched_versions}` +
+                 ` -- ${languageProcessor.getResponse('READ_MORE')}: ${vuln.advisory}\n`;
   });
-  _.each(data.updates, update => {
-    //
+  _.each(data.updates, (update: any, index: any) => {
+    depsList += `*${index}* => ${update}\n`;
   });
-  // TODO: Emit outComingMessageEvent towards slack client
+
+  let message = languageProcessor.getResponse('GIT_REPO_ADVICE').replace('{repo}', repo);
+  message += vulnsList !== '' ? '\n' + vulnsMsg.replace('{repo}', repo).replace('{vulnerabilities}', vulnsList) : '';
+  message += depsList !== '' ? '\n' + depsMsg.replace('{repo}', repo).replace('{dependencies_updates}', depsList) : '';
+
+  const outcomingMessageEvent: OutcomingMessageEvent = new OutcomingMessageEvent(
+    {
+      channel,
+      text: message
+    }
+  );
+  slack.emit(outcomingMessageEvent.type, outcomingMessageEvent.data);
 });
 git.on(GitEvent.COMMITS, (data: any) => {
   console.log('GIT COMMITS EVENT', data);

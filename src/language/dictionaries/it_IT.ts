@@ -65,23 +65,36 @@ export default {
       'Controlla i log, qualcosa non ha funzionato!',
     ],
   },
+  READ_MORE: {
+    answers: [
+      'leggi di più',
+      'per maggiori info',
+      'per più info',
+      'per saperne di più'
+    ]
+  },
+  GIT_REPO_ADVICE: {
+    answers: [
+      'ecco i risultati per *{repo}*\n',
+    ],
+  },
   GIT_VULNERABILITIES: {
     answers: [
-      'Ok... ho trovato queste vulnerabilità nel repo {repo}\n{vulnerabilities}',
-      'Allora, ho trovato queste vulnerabilità nel repository {repo}\n{vulnerabilities}',
-      'Fatto ci sono queste vulnerabilità nel repo {repo}\n{vulnerabilities}',
+      'ho trovato queste vulnerabilità\n{vulnerabilities}',
+      'ho trovato queste vulnerabilità\n{vulnerabilities}',
+      'ci sono queste vulnerabilità\n{vulnerabilities}',
     ],
   },
   GIT_DEPENDENCIES_UPDATES: {
     answers: [
-      'Ci sono alcuni pacchetti sul progetto {repo} che possono essere aggiornati, eccoli\n{dependencies_updates}',
-      'Alcuni pacchetti di {repo} possono essere aggiornati\n{dependencies_updates}',
+      'ci sono alcuni pacchetti che possono essere aggiornati, eccoli\n{dependencies_updates}',
+      'alcuni pacchetti possono essere aggiornati\n{dependencies_updates}',
     ],
   },
   GIT_COMMITS: {
     answers: [
-      'Ecco la lista degli ultimi commit effettuati sul repo {repo}\n{commits}',
-      'Hey, ecco i commit fatti su {repo}\n{commits}',
+      'ecco la lista degli ultimi commit effettuati\n{commits}',
+      'ecco i commit fatti\n{commits}',
     ],
   },
 };
