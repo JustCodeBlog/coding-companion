@@ -2,14 +2,6 @@ export default {
   //
   // Messages from human to bot
   //
-  UNKNOWN: {
-    utterances: [],
-    answers: [
-      'Perdonami, non ho capito',
-      'Come?',
-      'Potresti ripetere? Non ho ben capito...',
-    ],
-  },
   WELCOME: {
     utterances: ['ciao', 'hola'],
     answers: ['ciao!', 'hey!', 'hoy :-)', 'hola :D'],
@@ -45,18 +37,17 @@ export default {
       'Va bene, fra poco riceverai un report.',
     ],
   },
-  REPO_EXISTS: {
-    answers: [
-      'Il repository che mi hai passato è già sotto controllo',
-      'sto già monitorando questo repository ;)',
-      'questo repository è già sotto controllo',
-      'mi hai già fatto controllare questo repository, non è necessario aggiungerlo di nuovo.',
-    ],
-  },
 
   //
   // Messages from bot to human
   //
+  UNKNOWN: {
+    answers: [
+      'Perdonami, non ho capito',
+      'Come?',
+      'Potresti ripetere? Non ho ben capito...',
+    ],
+  },
   ERROR: {
     answers: [
       'Oops.. qualcosa è andato storto :S',
@@ -72,6 +63,14 @@ export default {
       'per più info',
       'per saperne di più'
     ]
+  },
+  REPO_EXISTS: {
+    answers: [
+      'Il repository che mi hai passato è già sotto controllo',
+      'sto già monitorando questo repository ;)',
+      'questo repository è già sotto controllo',
+      'mi hai già fatto controllare questo repository, non è necessario aggiungerlo di nuovo.',
+    ],
   },
   GIT_REPO_ADVICE: {
     answers: [
@@ -93,8 +92,13 @@ export default {
   },
   GIT_COMMITS: {
     answers: [
-      'ecco la lista degli ultimi commit effettuati\n{commits}',
-      'ecco i commit fatti\n{commits}',
+      'ecco la lista degli ultimi commit effettuati su *{repo}*\n{commits}',
+      'ecco i commit fatti su *{repo}*\n{commits}',
     ],
   },
+  GIT_SINGLE_COMMIT: {
+    answers: [
+      'il {human_date} effettuato da *{committer}* "{message}", per più info {url}\n'
+    ]
+  }
 };

@@ -8,20 +8,23 @@ class SlackClient extends events.EventEmitter {
   private rtm: any;
   private rtmOpts = {};
 
-  constructor(token: string | undefined) {
+  constructor() {
     super();
+  }
 
-    if (typeof token === 'undefined') {
+  public setAuth(token: string) {
+    this.token = token;
+  }
+  public connect() {
+    if (typeof this.token === 'undefined') {
       throw new Error('The slack token is missing.');
     }
 
-    this.token = token;
     this.rtm = new RTMClient(this.token);
-  }
 
-  public connect() {
     this.listenForChatMessages();
     this.listenForOutcomingMessages();
+
     this.rtm.start(this.rtmOpts);
   }
 
@@ -32,10 +35,6 @@ class SlackClient extends events.EventEmitter {
         text: message,
         mrkdwn: true
       })
-      // .sendMessage(message, conversationId)
-      // .then((res: any) => {
-      //   console.log('Message sent: ', res.ts);
-      // })
       .catch(console.error);
   }
 

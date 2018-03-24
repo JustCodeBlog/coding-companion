@@ -1,7 +1,7 @@
 import * as events from 'events';
 import * as _ from 'lodash';
 import { MessageProcessedEvent } from '../events';
-import { Db, GitClient } from '../services';
+import { GitService } from '../services';
 import { en_EN, it_IT } from './dictionaries';
 
 interface IResponse {
@@ -105,16 +105,9 @@ class LanguageProcessor extends events.EventEmitter {
         utterances: this.getUtterances('WATCH_REPO'),
         slots: this.getSlots('WATCH_REPO'),
         callback: (data: any, repo: string) => {
-          //
-          // TODO: Move into the GitService ?
-          //
-          Db.getInstance()
-            .createRepository({
-              user: data.user,
-              channel: data.channel,
-              url: repo.substring(1, repo.length - 1), // the URL comes in such a format <URL>
-            })
-            .then(res => {
+          GitService.getInstance()
+            .createRepository(data.user, data.channel, repo)
+            .then((res: any) => {
               const label = !res ? 'REPO_EXISTS' : 'WATCH_REPO';
               this.emitResponse({
                 label,
@@ -123,9 +116,7 @@ class LanguageProcessor extends events.EventEmitter {
                 message: this.getResponse(label),
               });
             })
-            .catch(err => {
-              // TODO: Log error
-
+            .catch((err: any) => {
               this.emitResponse({
                 label: 'ERROR',
                 user: data.user,
@@ -141,8 +132,7 @@ class LanguageProcessor extends events.EventEmitter {
         utterances: this.getUtterances('CHECK_ALL_REPOS'),
         slots: this.getSlots('CHECK_ALL_REPOS'),
         callback: (data: any) => {
-          // TODO: Only a master user can do this
-          GitClient.getInstance().checkAll();
+          GitService.getInstance().checkAll(data.user);
 
           this.emitResponse({
             label: 'CHECK_ALL_REPOS',

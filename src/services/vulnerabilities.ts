@@ -18,7 +18,7 @@ class VulnerabilitiesService {
 
       promises = [
         ...promises,
-        request.get(url, {json: true})
+        request.get(url, {json: true}).catch(err => console.error)
       ]
     });
 

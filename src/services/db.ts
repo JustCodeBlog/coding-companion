@@ -38,7 +38,7 @@ class Db extends events.EventEmitter {
           url: data.url,
         })
         .then(res => {
-          if (res == null) {
+          if (res.length === 0) {
             // If not existing
             repo
               .save(data)

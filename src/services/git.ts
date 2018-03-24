@@ -9,6 +9,13 @@ import { GitEvent } from '../events';
 import { IRepository } from '../models';
 import { Db, UpdatesService, VulnerabilitiesService } from '../services';
 
+interface ICommit {
+  author: string;
+  message: string;
+  date: Date;
+  url: string;
+}
+
 class GitService extends events.EventEmitter {
 
   public static getInstance(): GitService {
@@ -20,12 +27,13 @@ class GitService extends events.EventEmitter {
   private static GITHUB_BASEURL = 'https://api.github.com';
   private static BITBUCKET_BASEURL = 'https://api.bitbucket.org/2.0';
   private static GITHUB_CONTENT_ENDPOINT = '/repos/{owner}/{repo}/contents/{path}';
-  private static BITBUCKET_CONTENT_ENDPOINT = '/repositories/{owner}/{repo}/downloads/{path}';
+  private static BITBUCKET_CONTENT_ENDPOINT = '/repositories/{owner}/{repo}/src/master/{path}'; // TODO: Make node (master) dynamic
   private static GITHUB_COMMITS_ENDPOINT = '/repos/{owner}/{repo}/commits';
   private static BITBUCKET_COMMITS_ENDPOINT = '/repositories/{owner}/{repo}/commits';
 
   private db = Db.getInstance();
   private job: any;
+  private bitbucketAppPassword = '';
 
   constructor() {
     super();
@@ -37,6 +45,10 @@ class GitService extends events.EventEmitter {
     }
 
     GitService.instance = this;
+  }
+
+  public setAuth(authObj: any) {
+    this.bitbucketAppPassword = authObj.bitbucket;
   }
 
   public initWatch() {
@@ -54,13 +66,22 @@ class GitService extends events.EventEmitter {
     this.job.stop();
   }
 
-  public checkAll() {
-    this.doCheck();
+  public createRepository(user: string, channel: string, repo: string): Promise<any> {
+    return Db.getInstance()
+      .createRepository({
+        user,
+        channel,
+        url: repo.substring(1, repo.length - 1), // the URL comes in such a format <URL>
+      });
   }
 
-  private doCheck() {
+  public checkAll(user: string) {
+    this.doCheck(user);
+  }
+
+  private doCheck(user?: string) {
     const db = Db.getInstance();
-    const where = {};
+    const where = typeof user !== 'undefined' ? { user } : {};
 
     db
       .findRepositories(where)
@@ -94,8 +115,8 @@ class GitService extends events.EventEmitter {
           // ...
 
           this.getLastCommits(owner, repo, platform)
-            .then(comRes => {
-              const event = new GitEvent(GitEvent.COMMITS, comRes);
+            .then(commitsRes => {
+              const event = new GitEvent(GitEvent.COMMITS, commitsRes);
               this.emit(event.type, {channel, repo, data: event.data});
             });
         });
@@ -114,9 +135,7 @@ class GitService extends events.EventEmitter {
     return new Promise((resolve, reject) => {
       let url = platform === 'github'
         ? `${GitService.GITHUB_BASEURL}${GitService.GITHUB_CONTENT_ENDPOINT}`
-        : `${GitService.BITBUCKET_BASEURL}${
-            GitService.BITBUCKET_CONTENT_ENDPOINT
-          }`;
+        : `${GitService.BITBUCKET_BASEURL}${GitService.BITBUCKET_CONTENT_ENDPOINT}`;
 
       url = url
         .replace('{owner}', owner)
@@ -125,15 +144,19 @@ class GitService extends events.EventEmitter {
 
       request
         .get(url, {
+          auth: this.getAuthByPlatform(platform, owner),
           headers: this.getHeadersByPlatform(platform),
           json: true,
         })
         .then(res => {
-          const dependencies = this.getDependenciesFromPackageFile(res.content);
+
+          const {content, contentStr} = this.getContentFromResponse(res, platform);
+
+          const dependencies = this.getDependenciesFromPackageFile(content);
           const localRepoPath = `${__dirname}/../../tmp/${owner}_${repo}`;
           const tmpPackagePath = `${localRepoPath}/package.json`;
 
-          this.storePackageContent(localRepoPath, tmpPackagePath, Buffer.from(res.content, 'base64').toString());
+          this.storePackageContent(localRepoPath, tmpPackagePath, contentStr);
 
           Promise
             .all(
@@ -181,11 +204,44 @@ class GitService extends events.EventEmitter {
 
       request
         .get(url, {
+          auth: this.getAuthByPlatform(platform, owner),
           headers,
           json: true,
         })
         .then(res => {
-          // TODO: Return commits
+          let commits: ICommit[] = [];
+
+          if (platform === 'github') {
+            _.each(res, (val: any) => {
+              const commit: ICommit = {
+                author: `${val.commit.committer.name} <${val.commit.committer.email}>`,
+                message: val.commit.message,
+                date: new Date(val.commit.committer.date),
+                url: val.html_url
+              };
+              commits = [
+                ...commits,
+                commit
+              ]
+            });
+          } else if (platform === 'bitbucket') {
+            if (typeof res.values !== 'undefined') {
+              _.each(res.values, (val: any) => {
+                const commit: ICommit = {
+                  author: val.author.raw,
+                  message: val.message.replace('\n', ''),
+                  date: new Date(val.date),
+                  url: val.links.html.href
+                };
+                commits = [
+                  ...commits,
+                  commit
+                ]
+              });
+            }
+          }
+
+          resolve(commits);
         })
         .catch(err => {
           reject(err);
@@ -200,6 +256,20 @@ class GitService extends events.EventEmitter {
 
   private isBitbucket(url: string): boolean {
     return url.indexOf('bitbucket.org') > -1;
+  }
+
+  private getAuthByPlatform(platform: string, user: string): any {
+    let output;
+
+    if (platform === 'bitbucket') {
+      output = {
+        user,
+        'pass': this.bitbucketAppPassword,
+        'sendImmediately': true
+      };
+    }
+
+    return output;
   }
 
   private getHeadersByPlatform(platform: string): any {
@@ -230,11 +300,25 @@ class GitService extends events.EventEmitter {
     }
   }
 
-  private getDependenciesFromPackageFile(content: string): any[] {
-    const packageObject = JSON.parse(Buffer.from(content, 'base64').toString());
-    return  _.merge({}, packageObject.devDependencies, packageObject.dependencies);
+  private getDependenciesFromPackageFile(content: any): any[] {
+    return  _.merge({}, content.devDependencies, content.dependencies);
+  }
+
+  private getContentFromResponse(response: any, platform: string): any {
+    let content: any = '';
+    let contentStr: string = '';
+
+    if (platform === 'github') {
+      contentStr = Buffer.from(response.content, 'base64').toString();
+      content = JSON.parse(contentStr);
+    } else if (platform === 'bitbucket') {
+      content = response;
+      contentStr = JSON.stringify(content);
+    }
+
+    return { content, contentStr };
   }
 
 }
 
-export default GitService;
+export { GitService, ICommit };
