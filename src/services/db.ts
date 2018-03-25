@@ -1,6 +1,7 @@
 import * as events from 'events';
 import * as mongoose from 'mongoose';
 import { Repository } from '../models';
+import { ConfigService } from './';
 
 class Db extends events.EventEmitter {
   public static getInstance(): Db {
@@ -26,8 +27,7 @@ class Db extends events.EventEmitter {
   }
 
   public connect() {
-    mongoose.connect('mongodb://localhost:27017/coding-companion');
-    // TODO: Configure db name / db port
+    mongoose.connect(`mongodb://localhost:${ConfigService.params.dbPort}/${ConfigService.params.dbName}`);
   }
 
   public createRepository(data: any): Promise<any> {

@@ -11,6 +11,7 @@ import { Db, UpdatesService, VulnerabilitiesService } from '../services';
 
 interface ICommit {
   author: string;
+  email: string;
   message: string;
   date: Date;
   url: string;
@@ -214,7 +215,8 @@ class GitService extends events.EventEmitter {
           if (platform === 'github') {
             _.each(res, (val: any) => {
               const commit: ICommit = {
-                author: `${val.commit.committer.name} <${val.commit.committer.email}>`,
+                author: val.commit.committer.name,
+                email: val.commit.committer.email,
                 message: val.commit.message,
                 date: new Date(val.commit.committer.date),
                 url: val.html_url
@@ -228,7 +230,8 @@ class GitService extends events.EventEmitter {
             if (typeof res.values !== 'undefined') {
               _.each(res.values, (val: any) => {
                 const commit: ICommit = {
-                  author: val.author.raw,
+                  author: val.author.user.display_name,
+                  email: '',
                   message: val.message.replace('\n', ''),
                   date: new Date(val.date),
                   url: val.links.html.href

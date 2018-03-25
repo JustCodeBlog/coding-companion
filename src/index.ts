@@ -1,5 +1,4 @@
 import * as _ from 'lodash';
-import * as moment from 'moment-timezone';
 import {
   GitEvent,
   IncomingMessageEvent,
@@ -11,7 +10,6 @@ import { ConfigService, GitService, ICommit, SlackClient } from './services';
 
 //
 // Define objects
-const confs = new ConfigService();
 const slack = new SlackClient();
 const git: GitService = GitService.getInstance() as GitService;
 const languageProcessor = new LanguageProcessor();
@@ -59,23 +57,42 @@ git.on(GitEvent.PACKAGE_ANALYSIS, (evt: any) => {
 
   const depsMsg = languageProcessor.getResponse('GIT_DEPENDENCIES_UPDATES');
   const vulnsMsg = languageProcessor.getResponse('GIT_VULNERABILITIES');
+  const singleDepMsg = languageProcessor.getResponse('GIT_SINGLE_DEPENDENCY');
+  const singleVulnMsg = languageProcessor.getResponse('GIT_SINGLE_VULNERABILITY');
+
   let depsList = '';
   let vulnsList = '';
 
   _.each(data.vulns, vuln => {
-    vulnsList +=
-      `*${vuln.path[0]}* => ${vuln.module} ${vuln.version} ` +
-      `(CVSS Score ${vuln.cvss_score}) - *fixed* @ ${vuln.patched_versions} ` +
-      `-- ${languageProcessor.getResponse('READ_MORE')}: ${vuln.advisory}\n`;
-  });
-  _.each(data.updates, (update: any, index: any) => {
-    depsList += `*${index}* => ${update}\n`;
+    vulnsList += singleVulnMsg
+      .replace('{tree}', vuln.path[0])
+      .replace('{module}', vuln.module)
+      .replace('{version}', vuln.version)
+      .replace('{cvssScore}', vuln.cvss_score)
+      .replace('{patchedVersion}', vuln.patched_versions)
+      .replace('{url}', vuln.advisory)
+      .replace('{more}', languageProcessor.getResponse('READ_MORE')) + '\n';
   });
 
-  let message = languageProcessor.getResponse('GIT_REPO_ADVICE').replace('{repo}', repo);
-  // TODO: Create single entries in the language dictionary
-  message += vulnsList !== '' ? '\n' + vulnsMsg.replace('{repo}', repo).replace('{vulnerabilities}', vulnsList) : '';
-  message += depsList !== '' ? '\n' + depsMsg.replace('{repo}', repo).replace('{dependencies_updates}', depsList) : '';
+  _.each(data.updates, (update: any, index: any) => {
+    depsList += singleDepMsg.replace('{module}', index).replace('{version}', update) + '\n';
+  });
+
+  let message = languageProcessor
+    .getResponse('GIT_REPO_ADVICE')
+    .replace('{repo}', repo);
+
+  message += vulnsList !== ''
+    ? '\n' + vulnsMsg
+      .replace('{repo}', repo)
+      .replace('{vulnerabilities}', vulnsList)
+    : '';
+
+  message += depsList !== ''
+    ? '\n' + depsMsg
+      .replace('{repo}', repo)
+      .replace('{dependencies_updates}', depsList)
+    : '';
 
   const outcomingMessageEvent: OutcomingMessageEvent = new OutcomingMessageEvent(
     {
@@ -87,27 +104,45 @@ git.on(GitEvent.PACKAGE_ANALYSIS, (evt: any) => {
 });
 
 git.on(GitEvent.COMMITS, (evt: any) => {
+  const actionMsg = languageProcessor.getResponse('GIT_OPEN_COMMIT');
   const channel = evt.channel;
   const repo = evt.repo;
 
-  let commitsList = '';
-  _.each(evt.data, (commit: ICommit) => {
-    commitsList += languageProcessor.getResponse('GIT_SINGLE_COMMIT')
-      .replace('{human_date}', moment(commit.date).format('MMMM Do YYYY, h:mm:ss a'))
-      .replace('{committer}', commit.author)
-      .replace('{message}', commit.message)
-      .replace('{url}', commit.url);
-  })
-
-  const message = languageProcessor
+  const text = languageProcessor
     .getResponse('GIT_COMMITS')
-    .replace('{repo}', repo)
-    .replace('{commits}', commitsList);
+    .replace('{repo}', repo);
+
+  const attachments: any = [];
+  _.each(evt.data, (commit: ICommit) => {
+    const fallback = languageProcessor
+      .getResponse('GIT_SINGLE_COMMIT')
+      .replace('{human_date}', commit.date.toLocaleDateString(ConfigService.params.languageAlt, ConfigService.params.dateConf))
+      .replace('{committer}', commit.author)
+      .replace('{email}', commit.email)
+      .replace('{message}', commit.message);
+
+      attachments.push({
+      fallback,
+      color: "#2eb886",
+      author_name: commit.author,
+      author_link: commit.email,
+      title: commit.date.toLocaleDateString(ConfigService.params.languageAlt, ConfigService.params.dateConf),
+      text: commit.message,
+      actions: [
+        {
+          type: "button",
+          text: actionMsg,
+          url: commit.url
+        }
+      ]
+    });
+  });
 
   const outcomingMessageEvent: OutcomingMessageEvent = new OutcomingMessageEvent(
     {
       channel,
-      text: message
+      text,
+      attachments
     }
   );
   slack.emit(outcomingMessageEvent.type, outcomingMessageEvent.data);
@@ -115,8 +150,11 @@ git.on(GitEvent.COMMITS, (evt: any) => {
 
 //
 // Init/Config routines
-moment().tz(ConfigService.params.timezone).format()
-slack.setAuth(ConfigService.params.slackToken);
-slack.connect();
 git.setAuth({'bitbucket': ConfigService.params.bitbucketAppPassword});
 git.initWatch();
+slack.setAuth(
+  ConfigService.params.botName,
+  ConfigService.params.botPicture,
+  ConfigService.params.slackToken
+);
+slack.connect();

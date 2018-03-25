@@ -67,38 +67,55 @@ export default {
   REPO_EXISTS: {
     answers: [
       'Il repository che mi hai passato è già sotto controllo',
-      'sto già monitorando questo repository ;)',
-      'questo repository è già sotto controllo',
-      'mi hai già fatto controllare questo repository, non è necessario aggiungerlo di nuovo.',
+      'Sto già monitorando questo repository ;)',
+      'Questo repository è già sotto controllo',
+      'Mi hai già fatto controllare questo repository, non è necessario aggiungerlo di nuovo.',
     ],
   },
   GIT_REPO_ADVICE: {
     answers: [
-      'ecco i risultati per *{repo}*\n',
+      'Ecco i risultati per *{repo}*\n',
     ],
   },
   GIT_VULNERABILITIES: {
     answers: [
-      'ho trovato queste vulnerabilità\n{vulnerabilities}',
-      'ho trovato queste vulnerabilità\n{vulnerabilities}',
-      'ci sono queste vulnerabilità\n{vulnerabilities}',
+      '🐞 Ho trovato queste vulnerabilità\n{vulnerabilities}',
+      '🐞 Ho trovato queste vulnerabilità\n{vulnerabilities}',
+      '🐞 Ci sono queste vulnerabilità\n{vulnerabilities}',
     ],
+  },
+  GIT_SINGLE_VULNERABILITY: {
+    answers: [
+      '*{tree}* => {module} {version} (CVSS Score {cvssScore}) - *fixed* @ {patchedVersion} ℹ️ <{url}|{more}>'
+    ]
+  },
+  GIT_SINGLE_DEPENDENCY: {
+    answers: [
+      '*{module}* => {version}'
+    ]
   },
   GIT_DEPENDENCIES_UPDATES: {
     answers: [
-      'ci sono alcuni pacchetti che possono essere aggiornati, eccoli\n{dependencies_updates}',
-      'alcuni pacchetti possono essere aggiornati\n{dependencies_updates}',
+      '😰 Ci sono alcuni pacchetti che possono essere aggiornati, eccoli\n{dependencies_updates}',
+      '😰 Alcuni pacchetti possono essere aggiornati\n{dependencies_updates}',
     ],
   },
   GIT_COMMITS: {
     answers: [
-      'ecco la lista degli ultimi commit effettuati su *{repo}*\n{commits}',
-      'ecco i commit fatti su *{repo}*\n{commits}',
+      '🔥 Ecco la lista degli ultimi commit effettuati su *{repo}*',
+      '🔥 Ecco i commit fatti su *{repo}*',
     ],
   },
   GIT_SINGLE_COMMIT: {
     answers: [
-      'il {human_date} effettuato da *{committer}* "{message}", per più info {url}\n'
+      '{human_date} effettuato da *<mailto:{email}|{committer}>*\n"{message}"'
+    ]
+  },
+  GIT_OPEN_COMMIT: {
+    answers: [
+      'Da un\'occhiata 🔨',
+      'Apri 🔨',
+      'Maggiori info 🔨'
     ]
   }
 };

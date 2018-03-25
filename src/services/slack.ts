@@ -1,19 +1,24 @@
-import { RTMClient } from '@slack/client';
+import { RTMClient, WebClient } from '@slack/client';
 import * as events from 'events';
 
 import { IncomingMessageEvent, OutcomingMessageEvent } from '../events';
 
 class SlackClient extends events.EventEmitter {
+  private botName: string | undefined;
+  private botPictureUrl: string | undefined;
   private token: string | undefined;
   private rtm: any;
+  private web: any;
   private rtmOpts = {};
 
   constructor() {
     super();
   }
 
-  public setAuth(token: string) {
+  public setAuth(botName: string, pictureUrl: string, token: string) {
     this.token = token;
+    this.botName = botName;
+    this.botPictureUrl = pictureUrl;
   }
   public connect() {
     if (typeof this.token === 'undefined') {
@@ -21,6 +26,7 @@ class SlackClient extends events.EventEmitter {
     }
 
     this.rtm = new RTMClient(this.token);
+    this.web = new WebClient(this.token);
 
     this.listenForChatMessages();
     this.listenForOutcomingMessages();
@@ -28,19 +34,31 @@ class SlackClient extends events.EventEmitter {
     this.rtm.start(this.rtmOpts);
   }
 
-  public sendMessage(conversationId: string, message: string) {
+  public sendMessage(conversationId: string, message: string, attachments?: any) {
+    this.web.chat.postMessage({
+      username: this.botName,
+      icon_url: this.botPictureUrl,
+      channel: conversationId,
+      text: message,
+      attachments,
+      mrkdwn: true
+    })
+    .catch(console.error);;
+  }
+
+  public sendRtmMessage(conversationId: string, message: string) {
     this.rtm
-      .send('message', {
-        channel: conversationId,
-        text: message,
-        mrkdwn: true
-      })
-      .catch(console.error);
+    .send('message', {
+      channel: conversationId,
+      text: message,
+      mrkdwn: true
+    })
+    .catch(console.error);
   }
 
   private listenForOutcomingMessages() {
     this.on(OutcomingMessageEvent.LABEL, (data: any) => {
-      this.sendMessage(data.channel, data.text);
+      this.sendMessage(data.channel, data.text, data.attachments);
     });
   }
 

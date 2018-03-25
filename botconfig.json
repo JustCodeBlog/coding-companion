@@ -1,6 +1,21 @@
 {
+  "botName": "Coding Companion",
+  "botPicture": "https://api.adorable.io/avatars/48/codingcompanion@adorable.io.png",
+  "masterPassphrase": "",
   "slackToken": "",
   "bitbucketAppPassword": "",
   "timezone": "Europe/Rome",
-  "language": "it_IT"
+  "dateConf": {
+    "weekday": "long",
+    "year": "numeric",
+    "month": "long",
+    "day": "numeric",
+    "hour": "numeric",
+    "minute": "numeric"
+  },
+  "language": "it_IT",
+  "languageAlt": "it-IT",
+  "locale": "it",
+  "dbName": "coding-companion",
+  "dbPort": 27017
 }
