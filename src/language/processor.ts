@@ -3,6 +3,7 @@ import * as _ from 'lodash';
 import { MessageProcessedEvent } from '../events';
 import { GitService } from '../services';
 import { en_EN, it_IT } from './dictionaries';
+import { LanguageMemory } from './memory';
 
 interface IResponse {
   label: string;
@@ -14,6 +15,7 @@ interface IResponse {
 class LanguageProcessor extends events.EventEmitter {
   private nlc: any;
   private dict: any;
+  private memory: LanguageMemory;
 
   constructor() {
     super();
@@ -22,6 +24,7 @@ class LanguageProcessor extends events.EventEmitter {
 
     this.dict = this.loadDefaultDictionary();
     this.nlc = new NLC();
+    this.memory = new LanguageMemory();
 
     this.registerIntents();
     this.registerDialogs();
@@ -36,7 +39,7 @@ class LanguageProcessor extends events.EventEmitter {
     });
   }
 
-  public getResponse(label: string, data?: any): string {
+  public getResponse(label: string, data?: any, tries: number = 0): string {
     // TODO: Apply data values if they are expected in the response
 
     const response = this.dict[label]
@@ -45,11 +48,14 @@ class LanguageProcessor extends events.EventEmitter {
 
     let out = response;
     if (typeof response === 'object') {
-      // TODO: Introduce a coeff. to order the responses
-      // based on the last time they got returned.
-      out = response[Math.floor(Math.random() * (response.length - 1))];
+      out = response[Math.floor(Math.random() * response.length)];
     }
 
+    if (this.memory.isRecent(out) && tries < response.length) {
+      return this.getResponse(label, data, ++tries);
+    }
+
+    this.memory.store(out);
     return out;
   }
 
@@ -139,6 +145,20 @@ class LanguageProcessor extends events.EventEmitter {
             user: data.user,
             channel: data.channel,
             message: this.getResponse('CHECK_ALL_REPOS'),
+          });
+        },
+      },
+
+      {
+        intent: 'TEST',
+        utterances: this.getUtterances('TEST'),
+        slots: this.getSlots('TEST'),
+        callback: (data: any) => {
+          this.emitResponse({
+            label: 'TEST',
+            user: data.user,
+            channel: data.channel,
+            message: this.getResponse('TEST'),
           });
         },
       },

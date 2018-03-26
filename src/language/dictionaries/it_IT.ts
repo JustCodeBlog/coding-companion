@@ -37,6 +37,22 @@ export default {
       'Va bene, fra poco riceverai un report.',
     ],
   },
+  TEST: {
+    utterances: [
+      'prova',
+      'test',
+      'facciamo una prova',
+      'proviamo',
+    ],
+    slots: [],
+    answers: [
+      "Cosa proviamo?",
+      'Ok, cosa?',
+      'Devo fare qualcosa?',
+      'Va bene... inizi tu?',
+      'Ooook!'
+    ],
+  },
 
   //
   // Messages from bot to human
