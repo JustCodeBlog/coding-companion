@@ -90,78 +90,67 @@ class LanguageProcessor extends events.EventEmitter {
       : [];
   }
 
+  private getDefaultIntent(label: string, cb?: any): any {
+    const intent = label;
+    const utterances = this.getUtterances(label);
+    const slots = this.getSlots(label);
+
+    const callback = typeof cb === 'undefined'
+      ? (data: any) => {
+          this.emitResponse({
+            label,
+            user: data.user,
+            channel: data.channel,
+            message: this.getResponse(label),
+          });
+        }
+      : cb;
+
+    return {
+      intent,
+      utterances,
+      slots,
+      callback
+    };
+  }
+
   private registerIntents() {
     const intents = [
-      {
-        intent: 'WELCOME',
-        utterances: this.getUtterances('WELCOME'),
-        slots: this.getSlots('WELCOME'),
-        callback: (data: any) => {
-          this.emitResponse({
-            label: 'WELCOME',
-            user: data.user,
-            channel: data.channel,
-            message: this.getResponse('WELCOME'),
-          });
-        },
-      },
 
-      {
-        intent: 'WATCH_REPO',
-        utterances: this.getUtterances('WATCH_REPO'),
-        slots: this.getSlots('WATCH_REPO'),
-        callback: (data: any, repo: string) => {
-          GitService.getInstance()
-            .createRepository(data.user, data.channel, repo)
-            .then((res: any) => {
-              const label = !res ? 'REPO_EXISTS' : 'WATCH_REPO';
-              this.emitResponse({
-                label,
-                user: data.user,
-                channel: data.channel,
-                message: this.getResponse(label),
-              });
-            })
-            .catch((err: any) => {
-              this.emitResponse({
-                label: 'ERROR',
-                user: data.user,
-                channel: data.channel,
-                message: this.getResponse('ERROR'),
-              });
+      this.getDefaultIntent('WELCOME'),
+      this.getDefaultIntent('WATCH_REPO', (data: any, repo: string) => {
+        GitService.getInstance()
+          .createRepository(data.user, data.channel, repo)
+          .then((res: any) => {
+            const label = !res ? 'REPO_EXISTS' : 'WATCH_REPO';
+            this.emitResponse({
+              label,
+              user: data.user,
+              channel: data.channel,
+              message: this.getResponse(label),
             });
-        },
-      },
-
-      {
-        intent: 'CHECK_ALL_REPOS',
-        utterances: this.getUtterances('CHECK_ALL_REPOS'),
-        slots: this.getSlots('CHECK_ALL_REPOS'),
-        callback: (data: any) => {
-          GitService.getInstance().checkAll(data.user);
-
-          this.emitResponse({
-            label: 'CHECK_ALL_REPOS',
-            user: data.user,
-            channel: data.channel,
-            message: this.getResponse('CHECK_ALL_REPOS'),
+          })
+          .catch((err: any) => {
+            this.emitResponse({
+              label: 'ERROR',
+              user: data.user,
+              channel: data.channel,
+              message: this.getResponse('ERROR'),
+            });
           });
-        },
-      },
+      }),
+      this.getDefaultIntent('CHECK_ALL_REPOS', (data: any) => {
+        GitService.getInstance().checkAll(data.user);
 
-      {
-        intent: 'TEST',
-        utterances: this.getUtterances('TEST'),
-        slots: this.getSlots('TEST'),
-        callback: (data: any) => {
-          this.emitResponse({
-            label: 'TEST',
-            user: data.user,
-            channel: data.channel,
-            message: this.getResponse('TEST'),
-          });
-        },
-      },
+        this.emitResponse({
+          label: 'CHECK_ALL_REPOS',
+          user: data.user,
+          channel: data.channel,
+          message: this.getResponse('CHECK_ALL_REPOS'),
+        });
+      }),
+      this.getDefaultIntent('TEST'),
+
     ];
 
     _.each(intents, intent => {
