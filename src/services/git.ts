@@ -33,7 +33,7 @@ class GitService extends events.EventEmitter {
   private static BITBUCKET_COMMITS_ENDPOINT = '/repositories/{owner}/{repo}/commits';
 
   private db = Db.getInstance();
-  private job: any;
+  private jobs: any[] = [];
   private bitbucketAppPassword = '';
 
   constructor() {
@@ -53,18 +53,34 @@ class GitService extends events.EventEmitter {
   }
 
   public initWatch() {
-    this.job = new CronJob({
-      cronTime: '00 30 * * * 1-5',
+    // TODO: Configure watch per user
+
+    const checkDependenciesJob = new CronJob({
+      cronTime: '00 05 11 * * 1-5',
       onTick: () => {
-        this.doCheck();
+        this.doCheck(true, false);
       },
       start: false,
     });
-    this.job.start();
+    checkDependenciesJob.start();
+
+    const checkCommitsJob = new CronJob({
+      cronTime: '00 05 15 * * 1-5',
+      onTick: () => {
+        this.doCheck(true, false);
+      },
+      start: false,
+    });
+    checkCommitsJob.start();
+
+    this.jobs.push(checkDependenciesJob);
+    this.jobs.push(checkCommitsJob);
   }
 
   public stopWatch() {
-    this.job.stop();
+    this.jobs.forEach( (job:any) => {
+      job.stop();
+    });
   }
 
   public createRepository(user: string, channel: string, repo: string): Promise<any> {
@@ -77,10 +93,10 @@ class GitService extends events.EventEmitter {
   }
 
   public checkAll(user: string) {
-    this.doCheck(user);
+    this.doCheck(true, true, user);
   }
 
-  private doCheck(user?: string) {
+  private doCheck(checkDependencies: boolean = true, checkCommits: boolean = true, user?: string) {
     const db = Db.getInstance();
     const where = typeof user !== 'undefined' ? { user } : {};
 
@@ -88,6 +104,7 @@ class GitService extends events.EventEmitter {
       .findRepositories(where)
       .then(docs => {
         _.each(docs, (doc: any) => {
+
           const url = doc.url;
           const channel = doc.channel;
           const regExp = this.isGithub(url)
@@ -106,20 +123,27 @@ class GitService extends events.EventEmitter {
           const platform = this.isGithub(url) ? 'github' : 'bitbucket';
 
           // package.json
-          this.getDependenciesUpdatesAndVulnsFromPackageFile(owner, repo, platform)
-            .then(packageRes => {
-              const event = new GitEvent(GitEvent.PACKAGE_ANALYSIS, packageRes);
-              this.emit(event.type, {channel, repo, data: event.data});
-            });
+          if (checkDependencies) {
+            this.getDependenciesUpdatesAndVulnsFromPackageFile(owner, repo, platform)
+              .then(packageRes => {
+                // TODO: Keep tracks of last emitted deps and skip if nothing changed
+                const event = new GitEvent(GitEvent.PACKAGE_ANALYSIS, packageRes);
+                this.emit(event.type, {channel, repo, data: event.data});
+              });
 
-          // TODO: Support other dependencies
-          // ...
+            // TODO: Support other dependencies
+            // ...
+          }
 
-          this.getLastCommits(owner, repo, platform)
-            .then(commitsRes => {
-              const event = new GitEvent(GitEvent.COMMITS, commitsRes);
-              this.emit(event.type, {channel, repo, data: event.data});
-            });
+          if (checkCommits) {
+            this.getLastCommits(owner, repo, platform)
+              .then(commitsRes => {
+                // TODO: Keep tracks of last emitted commits and skip if nothing changed
+                const event = new GitEvent(GitEvent.COMMITS, commitsRes);
+                this.emit(event.type, {channel, repo, data: event.data});
+              });
+          }
+
         });
       })
       .catch(err => {
