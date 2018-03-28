@@ -43,7 +43,7 @@ class SlackClient extends events.EventEmitter {
       attachments,
       mrkdwn: true
     })
-    .catch(console.error);;
+    .catch(console.error);
   }
 
   public sendRtmMessage(conversationId: string, message: string) {

@@ -126,7 +126,6 @@ class GitService extends events.EventEmitter {
           if (checkDependencies) {
             this.getDependenciesUpdatesAndVulnsFromPackageFile(owner, repo, platform)
               .then(packageRes => {
-                // TODO: Keep tracks of last emitted deps and skip if nothing changed
                 const event = new GitEvent(GitEvent.PACKAGE_ANALYSIS, packageRes);
                 this.emit(event.type, {channel, repo, data: event.data});
               });
@@ -138,7 +137,6 @@ class GitService extends events.EventEmitter {
           if (checkCommits) {
             this.getLastCommits(owner, repo, platform)
               .then(commitsRes => {
-                // TODO: Keep tracks of last emitted commits and skip if nothing changed
                 const event = new GitEvent(GitEvent.COMMITS, commitsRes);
                 this.emit(event.type, {channel, repo, data: event.data});
               });

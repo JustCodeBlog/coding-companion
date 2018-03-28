@@ -6,19 +6,25 @@ import {
   OutcomingMessageEvent,
 } from './events';
 import { LanguageProcessor } from './language';
-import { ConfigService, GitService, ICommit, SlackClient } from './services';
+import { IUser } from './models';
+import { ConfigService, Db, GitService, ICommit, SlackClient } from './services';
 
 //
-// Define objects
+// Define services / clients
 const slack = new SlackClient();
-const git: GitService = GitService.getInstance() as GitService;
 const languageProcessor = new LanguageProcessor();
+const git: GitService = GitService.getInstance() as GitService;
+const db: Db = Db.getInstance() as Db;
 
 // Listen on slack client events
 slack.on(IncomingMessageEvent.LABEL, (data: any) => {
   const user: string = data.user;
   const channel: string = data.channel;
   const msg: string = data.text;
+
+  // This internally performs a check if it does exist
+  // TODO: Perform this call only when a first message is sent
+  db.createUser({user, channel});
 
   languageProcessor.handleCommand({
     user,
@@ -50,15 +56,16 @@ git.on(GitEvent.GIT_ERROR, (evt: any) => {
   console.log('GIT ERROR EVENT', evt);
 });
 
-git.on(GitEvent.PACKAGE_ANALYSIS, (evt: any) => {
+git.on(GitEvent.PACKAGE_ANALYSIS, async (evt: any) => {
   const channel = evt.channel;
+  const user: IUser = await db.findUser({ channel });
   const repo = evt.repo;
   const data = evt.data;
 
-  const depsMsg = languageProcessor.getResponse('GIT_DEPENDENCIES_UPDATES');
-  const vulnsMsg = languageProcessor.getResponse('GIT_VULNERABILITIES');
-  const singleDepMsg = languageProcessor.getResponse('GIT_SINGLE_DEPENDENCY');
-  const singleVulnMsg = languageProcessor.getResponse('GIT_SINGLE_VULNERABILITY');
+  const depsMsg = languageProcessor.getResponse(user, 'GIT_DEPENDENCIES_UPDATES');
+  const vulnsMsg = languageProcessor.getResponse(user, 'GIT_VULNERABILITIES');
+  const singleDepMsg = languageProcessor.getResponse(user, 'GIT_SINGLE_DEPENDENCY');
+  const singleVulnMsg = languageProcessor.getResponse(user, 'GIT_SINGLE_VULNERABILITY');
 
   let depsList = '';
   let vulnsList = '';
@@ -71,7 +78,7 @@ git.on(GitEvent.PACKAGE_ANALYSIS, (evt: any) => {
       .replace('{cvssScore}', vuln.cvss_score)
       .replace('{patchedVersion}', vuln.patched_versions)
       .replace('{url}', vuln.advisory)
-      .replace('{more}', languageProcessor.getResponse('READ_MORE')) + '\n';
+      .replace('{more}', languageProcessor.getResponse(user, 'READ_MORE')) + '\n';
   });
 
   _.each(data.updates, (update: any, index: any) => {
@@ -79,7 +86,7 @@ git.on(GitEvent.PACKAGE_ANALYSIS, (evt: any) => {
   });
 
   let message = languageProcessor
-    .getResponse('GIT_REPO_ADVICE')
+    .getResponse(user, 'GIT_REPO_ADVICE')
     .replace('{repo}', repo);
 
   message += vulnsList !== ''
@@ -103,19 +110,20 @@ git.on(GitEvent.PACKAGE_ANALYSIS, (evt: any) => {
   slack.emit(outcomingMessageEvent.type, outcomingMessageEvent.data);
 });
 
-git.on(GitEvent.COMMITS, (evt: any) => {
-  const actionMsg = languageProcessor.getResponse('GIT_OPEN_COMMIT');
+git.on(GitEvent.COMMITS, async (evt: any) => {
   const channel = evt.channel;
   const repo = evt.repo;
+  const user: IUser = await db.findUser({ channel });
+  const actionMsg = languageProcessor.getResponse(user, 'GIT_OPEN_COMMIT');
 
   const text = languageProcessor
-    .getResponse('GIT_COMMITS')
+    .getResponse(user, 'GIT_COMMITS')
     .replace('{repo}', repo);
 
   const attachments: any = [];
   _.each(evt.data, (commit: ICommit) => {
     const fallback = languageProcessor
-      .getResponse('GIT_SINGLE_COMMIT')
+      .getResponse(user, 'GIT_SINGLE_COMMIT')
       .replace('{human_date}', commit.date.toLocaleDateString(ConfigService.params.languageAlt, ConfigService.params.dateConf))
       .replace('{committer}', commit.author)
       .replace('{email}', commit.email)

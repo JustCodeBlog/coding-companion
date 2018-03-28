@@ -1,6 +1,7 @@
 import * as events from 'events';
 import * as _ from 'lodash';
 import { MessageProcessedEvent } from '../events';
+import { IUser } from '../models';
 import { GitService } from '../services';
 import { en_EN, it_IT } from './dictionaries';
 import { LanguageMemory } from './memory';
@@ -26,21 +27,24 @@ class LanguageProcessor extends events.EventEmitter {
     this.nlc = new NLC();
     this.memory = new LanguageMemory();
 
-    this.registerIntents();
-    this.registerDialogs();
-
     this.nlc.registerNotFound((data: any) => {
+      const user: IUser = this.getUserInterface(data);
+
       this.emitResponse({
         label: 'UNKNOWN',
         user: data.user,
         channel: data.channel,
-        message: this.getResponse('UNKNOWN'),
+        message: this.getResponse(user, 'UNKNOWN'),
       });
     });
+
+    this.registerIntents();
+    this.registerDialogs();
   }
 
-  public getResponse(label: string, data?: any, tries: number = 0): string {
+  public getResponse(user: IUser, label: string, data?: any, tries: number = 0): string {
     // TODO: Apply data values if they are expected in the response
+    // TODO: Use "user" for customized messages
 
     const response = this.dict[label]
       ? this.dict[label].answers
@@ -51,26 +55,32 @@ class LanguageProcessor extends events.EventEmitter {
       out = response[Math.floor(Math.random() * response.length)];
     }
 
-    if (this.memory.isRecent(out) && tries < response.length) {
-      return this.getResponse(label, data, ++tries);
+    if (this.memory.isRecent(user, out) && tries < response.length) {
+      return this.getResponse(user, label, data, ++tries);
     }
 
-    this.memory.store(out);
+    this.memory.store(user, out);
     return out;
   }
 
   public handleCommand(commandData: any) {
     const { user, channel, command } = commandData;
     this.nlc.handleCommand(
+      // This object will be sent to every intent callback func.
       {
         user,
         channel,
       },
+      // The string to be parsed
       command
     );
   }
 
   private emitResponse(data: IResponse) {
+    const user: IUser = this.getUserInterface(data);
+
+    // TODO: Check memory before sending response
+
     const event: MessageProcessedEvent = new MessageProcessedEvent(data);
     this.emit(event.type, event.data);
   }
@@ -97,11 +107,12 @@ class LanguageProcessor extends events.EventEmitter {
 
     const callback = typeof cb === 'undefined'
       ? (data: any) => {
+          const user: IUser = this.getUserInterface(data);
           this.emitResponse({
             label,
             user: data.user,
             channel: data.channel,
-            message: this.getResponse(label),
+            message: this.getResponse(user, label),
           });
         }
       : cb;
@@ -114,11 +125,38 @@ class LanguageProcessor extends events.EventEmitter {
     };
   }
 
+  private getUserInterface(data: any): IUser {
+    let out: IUser = {
+      user: '',
+      channel: ''
+    };
+
+    if (typeof data.user === 'undefined' || data.channel === 'undefined') {
+      console.error('Trying to get user interface from invalid source', data);
+    } else {
+      out = {
+        user: data.user,
+        channel: data.channel
+      };
+    }
+
+    return out;
+  }
+
   private registerIntents() {
     const intents = [
 
+      /**
+       *
+       */
       this.getDefaultIntent('WELCOME'),
+
+      /**
+       *
+       */
       this.getDefaultIntent('WATCH_REPO', (data: any, repo: string) => {
+        const user: IUser = this.getUserInterface(data);
+
         GitService.getInstance()
           .createRepository(data.user, data.channel, repo)
           .then((res: any) => {
@@ -127,7 +165,7 @@ class LanguageProcessor extends events.EventEmitter {
               label,
               user: data.user,
               channel: data.channel,
-              message: this.getResponse(label),
+              message: this.getResponse(user, label),
             });
           })
           .catch((err: any) => {
@@ -135,20 +173,30 @@ class LanguageProcessor extends events.EventEmitter {
               label: 'ERROR',
               user: data.user,
               channel: data.channel,
-              message: this.getResponse('ERROR'),
+              message: this.getResponse(user, 'ERROR'),
             });
           });
       }),
+
+      /**
+       *
+       */
       this.getDefaultIntent('CHECK_ALL_REPOS', (data: any) => {
+        const user: IUser = this.getUserInterface(data);
+
         GitService.getInstance().checkAll(data.user);
 
         this.emitResponse({
           label: 'CHECK_ALL_REPOS',
           user: data.user,
           channel: data.channel,
-          message: this.getResponse('CHECK_ALL_REPOS'),
+          message: this.getResponse(user, 'CHECK_ALL_REPOS'),
         });
       }),
+
+      /**
+       *
+       */
       this.getDefaultIntent('TEST'),
 
     ];

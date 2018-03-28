@@ -28,6 +28,14 @@ class BaseMongoModel {
   public find(where: any): Promise<any> {
     return this.model.find(where);
   }
+
+  public update(where: any, data: any): Promise<any> {
+    return this.model.update(where, { $set: data });
+  }
+
+  public remove(where: any): Promise<any> {
+    return this.model.remove(where);
+  }
 }
 
 export default BaseMongoModel;

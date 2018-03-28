@@ -1,20 +1,12 @@
 import * as _ from 'lodash';
-
-interface IMemory {
-  rawData: string,
-  hash: string,
-  weight: number,
-  lossCoeff: number,
-  accessDate: Date,
-  creationDate: Date
-}
+import { IPersistedMemory, IUser } from '../models';
+import { Db } from '../services';
 
 // TODO: Make singleton
 class LanguageMemory {
 
   private SEED = 0xCAFEBABE;
   private XXHash = require('xxhash');
-  private memories: IMemory[] = [];
 
   private SHORT_TERM_THRESHOLD = 300000; // 1m
   private LONG_TERM_THRESHOLD = 86400000 // 1d
@@ -23,10 +15,10 @@ class LanguageMemory {
     setInterval(this.forget, this.LONG_TERM_THRESHOLD);
   }
 
-  public store(data: string) {
-    let memory: IMemory | undefined = this.getMemoryByContent(data);
+  public async store(user: IUser, data: string) {
+    let memory: any = await this.getMemoryByContent(user, data);
 
-    if (!memory) {
+    if (!memory[0]) {
       const now = new Date();
       memory = {
         rawData: data,
@@ -34,13 +26,12 @@ class LanguageMemory {
         weight: 0,
         lossCoeff: 0,
         accessDate: now,
-        creationDate: now
-      }
+        creationDate: now,
+        user: user.user,
+        channel: user.channel
+      };
 
-      this.memories = [
-        ...this.memories,
-        memory
-      ]
+      Db.getInstance().createMemory(memory);
     }
 
     // console.log('------------------');
@@ -48,47 +39,59 @@ class LanguageMemory {
     // console.log('------------------');
   }
 
-  public recall(data: string): IMemory | undefined {
-    const memory: IMemory | undefined = this.getMemoryByContent(data);
+  public async recall(user: IUser, data: string): Promise<IPersistedMemory> {
+    const memory: any = await this.getMemoryByContent(user, data);
 
-    if (memory) {
+    if (memory[0]) {
+      const tmpMemory: IPersistedMemory = memory[0];
       const now = new Date();
-      (memory as IMemory).accessDate = new Date();
-      (memory as IMemory).weight += 0.05;
-      (memory as IMemory).lossCoeff = now.getTime() - (memory as IMemory).creationDate.getTime();
+      tmpMemory.accessDate = new Date();
+      tmpMemory.weight += 0.05;
+      tmpMemory.lossCoeff = now.getTime() - tmpMemory.creationDate.getTime();
 
-      // console.log('recalled memory', memory);
+      Db.getInstance().updateMemory(
+        {
+          channel: tmpMemory.channel,
+          hash: tmpMemory.hash
+        },
+        tmpMemory
+      );
+
+      // console.log('recalled memory', tmpMemory);
     }
 
     return memory;
   }
 
-  public isRecent(data: string): boolean {
-    const memory: IMemory | undefined = this.getMemoryByContent(data);
+  public async isRecent(user: IUser, data: string): Promise<boolean> {
+    const memory: any = await this.getMemoryByContent(user, data);
     let output = false;
 
-    if (memory) {
-      const dt = new Date().getTime() - memory.creationDate.getTime();
+    if (memory[0]) {
+      const dt = new Date().getTime() - memory[0].creationDate.getTime();
       output = dt <= this.SHORT_TERM_THRESHOLD;
     }
 
-    // console.log('is %s recent = %s', data, output);
+    // console.log('is "%s" recent = %s', data, output);
 
     return output;
   }
 
-  private getMemoryByContent(data: string): IMemory | undefined {
+  private getMemoryByContent(user: IUser, data: string): Promise<IPersistedMemory> {
     const hash = this.XXHash.hash(new Buffer(data), this.SEED);
-    return _.find(this.memories, { hash });
+    return Db.getInstance().findMemories({$and: [{ channel: user.channel, hash }]});
   }
 
-  private forget() {
-    this.memories.filter((memory: IMemory) => {
+  private async forget() {
+    const memories: IPersistedMemory[] = await Db.getInstance().findMemories({});
+    memories.forEach((memory: IPersistedMemory) => {
       const dt = new Date().getTime() - memory.creationDate.getTime();
-      return dt <= this.LONG_TERM_THRESHOLD;
+      if (dt <= this.LONG_TERM_THRESHOLD) {
+        Db.getInstance().deleteMemory(memory.hash);
+      }
     });
   }
 
 }
 
-export { LanguageMemory, IMemory };
+export { LanguageMemory, IPersistedMemory };

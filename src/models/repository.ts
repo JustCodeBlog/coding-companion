@@ -7,7 +7,7 @@ interface IRepository {
 }
 
 class Repository extends BaseMongoModel {
-  constructor(data: any) {
+  constructor(data?: any) {
     super('Repositories', {
       user: String,
       channel: String,
