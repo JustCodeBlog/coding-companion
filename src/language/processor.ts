@@ -23,9 +23,9 @@ class LanguageProcessor extends events.EventEmitter {
 
     const NLC = require('natural-language-commander');
 
+    this.memory = LanguageMemory.getInstance();
     this.dict = this.loadDefaultDictionary();
     this.nlc = new NLC();
-    this.memory = new LanguageMemory();
 
     this.nlc.registerNotFound((data: any) => {
       const user: IUser = this.getUserInterface(data);
@@ -46,6 +46,11 @@ class LanguageProcessor extends events.EventEmitter {
     // TODO: Apply data values if they are expected in the response
     // TODO: Use "user" for customized messages
 
+    const isRecent = async () => {
+      const ret = await this.memory.isRecent(user, out);
+      return ret;
+    }
+
     const response = this.dict[label]
       ? this.dict[label].answers
       : this.dict.UNKNOWN.answers;
@@ -55,7 +60,7 @@ class LanguageProcessor extends events.EventEmitter {
       out = response[Math.floor(Math.random() * response.length)];
     }
 
-    if (this.memory.isRecent(user, out) && tries < response.length) {
+    if (response.length > 1 && isRecent() && tries < response.length) {
       return this.getResponse(user, label, data, ++tries);
     }
 
@@ -77,10 +82,6 @@ class LanguageProcessor extends events.EventEmitter {
   }
 
   private emitResponse(data: IResponse) {
-    const user: IUser = this.getUserInterface(data);
-
-    // TODO: Check memory before sending response
-
     const event: MessageProcessedEvent = new MessageProcessedEvent(data);
     this.emit(event.type, event.data);
   }

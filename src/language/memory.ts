@@ -2,8 +2,13 @@ import * as _ from 'lodash';
 import { IPersistedMemory, IUser } from '../models';
 import { Db } from '../services';
 
-// TODO: Make singleton
 class LanguageMemory {
+
+  public static getInstance(): LanguageMemory {
+    return LanguageMemory.instance;
+  }
+
+  private static instance: LanguageMemory = new LanguageMemory();
 
   private SEED = 0xCAFEBABE;
   private XXHash = require('xxhash');
@@ -12,6 +17,14 @@ class LanguageMemory {
   private LONG_TERM_THRESHOLD = 86400000 // 1d
 
   constructor() {
+    if (LanguageMemory.instance) {
+      throw new Error(
+        'Error: Instantiation failed: Use getInstance() instead of new.'
+      );
+    }
+
+    LanguageMemory.instance = this;
+
     setInterval(this.forget, this.LONG_TERM_THRESHOLD);
   }
 
