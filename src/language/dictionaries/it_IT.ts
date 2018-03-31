@@ -72,6 +72,12 @@ export default {
       'Controlla i log, qualcosa non ha funzionato!',
     ],
   },
+  IS_RECENT_MEMORY: {
+    answers: [
+      'Per quel che ricordo non è cambiato nulla rispetto all\'ultimo messaggio di questo tipo :S',
+      'Da quel che noto non è cambiato nulla rispetto a prima.'
+    ]
+  },
   READ_MORE: {
     answers: [
       'leggi di più',

@@ -85,7 +85,9 @@ class LanguageMemory {
       output = dt <= this.SHORT_TERM_THRESHOLD;
     }
 
-    // console.log('is "%s" recent = %s', data, output);
+    // TODO: Handle long term memories
+    // TODO: Old memories never gets removed
+    // console.log('is "%s" recent = %s', data, output, memory[0]);
 
     return output;
   }

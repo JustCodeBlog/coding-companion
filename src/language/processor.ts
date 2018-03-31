@@ -43,7 +43,6 @@ class LanguageProcessor extends events.EventEmitter {
   }
 
   public getResponse(user: IUser, label: string, data?: any, tries: number = 0): string {
-    // TODO: Apply data values if they are expected in the response
     // TODO: Use "user" for customized messages
 
     const isRecent = async () => {
@@ -57,7 +56,12 @@ class LanguageProcessor extends events.EventEmitter {
 
     let out = response;
     if (typeof response === 'object') {
-      out = response[Math.floor(Math.random() * response.length)];
+      out = this.hydrateDataInResponse(
+        data,
+        response[Math.floor(Math.random() * response.length)]
+      );
+    } else {
+      out = this.hydrateDataInResponse(data, out);
     }
 
     if (response.length > 1 && isRecent() && tries < response.length) {
@@ -79,6 +83,13 @@ class LanguageProcessor extends events.EventEmitter {
       // The string to be parsed
       command
     );
+  }
+
+  private hydrateDataInResponse(data: any, message: string): string {
+    _.each(data, (d: any, i: number) => {
+      message = message.replace(new RegExp(`{${i}}`, 'igm'), d);
+    });
+    return message;
   }
 
   private emitResponse(data: IResponse) {
