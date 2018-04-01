@@ -11,11 +11,11 @@ import { ConfigService, Db, GitService, ICommit, SlackClient } from './services'
 
 //
 // Define services / clients
-const slack = new SlackClient();
 const languageProcessor = new LanguageProcessor();
 
 // Singleton objects
 const languageMemory = LanguageMemory.getInstance() as LanguageMemory;
+const slack = SlackClient.getInstance();
 const git: GitService = GitService.getInstance() as GitService;
 const db: Db = Db.getInstance() as Db;
 
@@ -113,7 +113,7 @@ git.on(GitEvent.PACKAGE_ANALYSIS, async (evt: any) => {
     : '';
 
   let outcomingMessageEvent: OutcomingMessageEvent;
-  if (await languageMemory.isRecent(user[0], mnemonicPayload)) {
+  if (await languageMemory.isRecent(user[0], mnemonicPayload, true)) {
     outcomingMessageEvent = new OutcomingMessageEvent(
       {
         channel,
@@ -171,7 +171,7 @@ git.on(GitEvent.COMMITS, async (evt: any) => {
   });
 
   let outcomingMessageEvent: OutcomingMessageEvent;
-  if (await languageMemory.isRecent(user[0], mnemonicPayload)) {
+  if (await languageMemory.isRecent(user[0], mnemonicPayload, true)) {
     outcomingMessageEvent = new OutcomingMessageEvent(
       {
         channel,

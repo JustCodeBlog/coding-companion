@@ -2,7 +2,7 @@ import * as events from 'events';
 import * as _ from 'lodash';
 import { MessageProcessedEvent } from '../events';
 import { IUser } from '../models';
-import { GitService } from '../services';
+import { GitService, SlackClient } from '../services';
 import { en_EN, it_IT } from './dictionaries';
 import { LanguageMemory } from './memory';
 
@@ -196,7 +196,8 @@ class LanguageProcessor extends events.EventEmitter {
       this.getDefaultIntent('CHECK_ALL_REPOS', (data: any) => {
         const user: IUser = this.getUserInterface(data);
 
-        GitService.getInstance().checkAll(data.user);
+        GitService.getInstance()
+          .checkAll(data.user);
 
         this.emitResponse({
           label: 'CHECK_ALL_REPOS',
@@ -210,6 +211,23 @@ class LanguageProcessor extends events.EventEmitter {
        *
        */
       this.getDefaultIntent('TEST'),
+
+      /**
+       *
+       */
+      this.getDefaultIntent('REMOVE_ALL_MESSAGES', (data: any) => {
+        const user: IUser = this.getUserInterface(data);
+
+        SlackClient.getInstance()
+          .deleteAllMessagesFromConversation(data.channel, data.user);
+
+        this.emitResponse({
+          label: 'REMOVE_ALL_MESSAGES',
+          user: data.user,
+          channel: data.channel,
+          message: this.getResponse(user, 'REMOVE_ALL_MESSAGES'),
+        });
+      }),
 
     ];
 

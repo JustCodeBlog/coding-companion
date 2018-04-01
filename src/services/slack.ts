@@ -1,9 +1,17 @@
 import { RTMClient, WebClient } from '@slack/client';
 import * as events from 'events';
+import * as _ from 'lodash';
 
 import { IncomingMessageEvent, OutcomingMessageEvent } from '../events';
 
 class SlackClient extends events.EventEmitter {
+
+  public static getInstance(): SlackClient {
+    return SlackClient.instance;
+  }
+
+  private static instance: SlackClient = new SlackClient();
+
   private botName: string | undefined;
   private botPictureUrl: string | undefined;
   private token: string | undefined;
@@ -13,6 +21,14 @@ class SlackClient extends events.EventEmitter {
 
   constructor() {
     super();
+
+    if (SlackClient.instance) {
+      throw new Error(
+        'Error: Instantiation failed: Use getInstance() instead of new.'
+      );
+    }
+
+    SlackClient.instance = this;
   }
 
   public setAuth(botName: string, pictureUrl: string, token: string) {
@@ -35,25 +51,47 @@ class SlackClient extends events.EventEmitter {
   }
 
   public sendMessage(conversationId: string, message: string, attachments?: any) {
-    this.web.chat.postMessage({
-      username: this.botName,
-      icon_url: this.botPictureUrl,
-      channel: conversationId,
-      text: message,
-      attachments,
-      mrkdwn: true
-    })
-    .catch(console.error);
+    this.web.chat
+      .postMessage({
+        username: this.botName,
+        icon_url: this.botPictureUrl,
+        channel: conversationId,
+        text: message,
+        attachments,
+        mrkdwn: true
+      })
+      .catch(console.error);
   }
 
   public sendRtmMessage(conversationId: string, message: string) {
     this.rtm
-    .send('message', {
-      channel: conversationId,
-      text: message,
-      mrkdwn: true
-    })
-    .catch(console.error);
+      .send('message', {
+        channel: conversationId,
+        text: message,
+        mrkdwn: true
+      })
+      .catch(console.error);
+  }
+
+  public deleteAllMessagesFromConversation(conversationId: string, userId: string) {
+    this.web
+      .conversations.history({
+        channel: conversationId
+      })
+      .then((res: any) => {
+        _.each(res.messages, (message: any) => {
+          if (message.subtype === 'bot_message' ) {
+            // Deleting the iterated message
+            this.web.chat
+            .delete({
+              channel: conversationId,
+              ts: message.ts
+            })
+            .catch(console.error);
+          }
+        });
+      })
+      .catch(console.error);
   }
 
   private listenForOutcomingMessages() {
@@ -68,16 +106,14 @@ class SlackClient extends events.EventEmitter {
 
       // Skip empty messages or messages that are from a bot or my own user ID
       if (
-        data.text === undefined ||
-        (data.subtype && data.subtype === 'bot_message') ||
-        (!data.subtype && data.user === this.rtm.activeUserId)
+        data.text === undefined
+        || (data.subtype && data.subtype === 'bot_message')
+        || (!data.subtype && data.user === this.rtm.activeUserId)
       ) {
         return;
       }
 
-      const incomingMessageEvent: IncomingMessageEvent = new IncomingMessageEvent(
-        data
-      );
+      const incomingMessageEvent: IncomingMessageEvent = new IncomingMessageEvent(data);
       this.emit(incomingMessageEvent.type, incomingMessageEvent.data);
     });
   }

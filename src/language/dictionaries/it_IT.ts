@@ -37,6 +37,22 @@ export default {
       'Va bene, fra poco riceverai un report.',
     ],
   },
+  REMOVE_ALL_MESSAGES: {
+    utterances: [
+      'rimuovi tutti i messaggi',
+      'cancella tutto',
+      'rimuovi tutti i nostri messaggi',
+      'rimuovi la conversazione',
+      'cancella la nostra conversazione',
+      'cancella la conversazione',
+    ],
+    slots: [],
+    answers: [
+      "Ok!",
+      'Va bene',
+      'Lo faccio subito',
+    ],
+  },
   TEST: {
     utterances: [
       'prova',

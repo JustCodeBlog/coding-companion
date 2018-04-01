@@ -22,19 +22,27 @@ class BaseMongoModel {
 
   public save(data: any = this.data): Promise<any> {
     const model = new this.model(data);
-    return model.save();
+    return model.save()
+      .then(/* console.log */)
+      .catch(console.error);
   }
 
   public find(where: any): Promise<any> {
-    return this.model.find(where);
+    return this.model.find(where)
+      .then(/* console.log */)
+      .catch(console.error);
   }
 
   public update(where: any, data: any): Promise<any> {
-    return this.model.update(where, { $set: data });
+    return this.model.update(where, { $set: data })
+      .then(/* console.log */)
+      .catch(console.error);
   }
 
   public remove(where: any): Promise<any> {
-    return this.model.remove(where);
+    return this.model.remove(where)
+      .then(/* console.log */)
+      .catch(console.error);
   }
 }
 

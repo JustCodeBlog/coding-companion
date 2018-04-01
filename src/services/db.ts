@@ -60,13 +60,11 @@ class Db extends events.EventEmitter {
   }
 
   public findUser(where: any): Promise<any> {
-    const user = new User();
-    return user.find(where);
+    return new User().find(where);
   }
 
   public findMemories(where: any): Promise<any> {
-    const memory = new PersistedMemory();
-    return memory.find(where);
+    return new PersistedMemory().find(where);
   }
 
   public createMemory(data: IPersistedMemory): Promise<any> {
@@ -100,13 +98,11 @@ class Db extends events.EventEmitter {
   }
 
   public updateMemory(where: any, data: IPersistedMemory): Promise<any> {
-    const memory = new PersistedMemory();
-    return memory.update(where, data);
+    return new PersistedMemory().update(where, data);
   }
 
   public deleteMemory(hash: string): Promise<any> {
-    const memory = new PersistedMemory();
-    return memory.remove({hash});
+    return new PersistedMemory().remove({hash});
   }
 
   public createRepository(data: IRepository): Promise<any> {
@@ -139,13 +135,11 @@ class Db extends events.EventEmitter {
   }
 
   public deleteRepository(url: string) {
-    const repo = new Repository();
-    return repo.remove({url});
+    return new Repository().remove({url});
   }
 
   public findRepositories(where: any): Promise<any> {
-    const repo = new Repository();
-    return repo.find(where);
+    return new Repository().find(where);
   }
 }
 

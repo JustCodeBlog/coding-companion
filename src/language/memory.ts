@@ -13,7 +13,7 @@ class LanguageMemory {
   private SEED = 0xCAFEBABE;
   private XXHash = require('xxhash');
 
-  private SHORT_TERM_THRESHOLD = 300000; // 1m
+  private SHORT_TERM_THRESHOLD = 300000; // 5m
   private LONG_TERM_THRESHOLD = 86400000 // 1d
 
   constructor() {
@@ -26,6 +26,7 @@ class LanguageMemory {
     LanguageMemory.instance = this;
 
     setInterval(this.forget, this.LONG_TERM_THRESHOLD);
+    this.forget();
   }
 
   public async store(user: IUser, data: string) {
@@ -76,16 +77,17 @@ class LanguageMemory {
     return memory;
   }
 
-  public async isRecent(user: IUser, data: string): Promise<boolean> {
+  public async isRecent(user: IUser, data: string, isLongTerm: boolean = false): Promise<boolean> {
     const memory: any = await this.getMemoryByContent(user, data);
     let output = false;
 
     if (memory[0]) {
       const dt = new Date().getTime() - memory[0].creationDate.getTime();
-      output = dt <= this.SHORT_TERM_THRESHOLD;
+      output = isLongTerm
+        ? dt <= this.LONG_TERM_THRESHOLD
+        : dt <= this.SHORT_TERM_THRESHOLD;
     }
 
-    // TODO: Handle long term memories
     // TODO: Old memories never gets removed
     // console.log('is "%s" recent = %s', data, output, memory[0]);
 
@@ -99,9 +101,9 @@ class LanguageMemory {
 
   private async forget() {
     const memories: IPersistedMemory[] = await Db.getInstance().findMemories({});
-    memories.forEach((memory: IPersistedMemory) => {
+    _.each(memories, (memory: IPersistedMemory) => {
       const dt = new Date().getTime() - memory.creationDate.getTime();
-      if (dt <= this.LONG_TERM_THRESHOLD) {
+      if (dt >= this.LONG_TERM_THRESHOLD) {
         Db.getInstance().deleteMemory(memory.hash);
       }
     });
