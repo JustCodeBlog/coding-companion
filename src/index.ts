@@ -7,11 +7,20 @@ import {
 } from './events';
 import { LanguageMemory, LanguageProcessor } from './language';
 import { IUser } from './models';
-import { ConfigService, Db, GitService, ICommit, SlackClient } from './services';
+import {
+  ConfigService,
+  Db,
+  GitService,
+  ICommit,
+  IStackOverflowResult,
+  SlackClient,
+  StackOverflowService
+} from './services';
 
 //
 // Define services / clients
 const languageProcessor = new LanguageProcessor();
+const stackOverflowService = new StackOverflowService();
 
 // Singleton objects
 const languageMemory = LanguageMemory.getInstance() as LanguageMemory;
@@ -44,6 +53,7 @@ languageProcessor.on(MessageProcessedEvent.LABEL, (data: any) => {
       channel: data.channel,
       text: data.message,
       user: data.user,
+      attachments: data.attachments || undefined
     }
   );
   slack.emit(outcomingMessageEvent.type, outcomingMessageEvent.data);
@@ -81,6 +91,7 @@ git.on(GitEvent.PACKAGE_ANALYSIS, async (evt: any) => {
       more: ''
     });
 
+    // Part of the message to be sent
     vulnsList += languageProcessor.getResponse(user[0], 'GIT_SINGLE_VULNERABILITY', {
       tree: vuln.path[0],
       module: vuln.module,
@@ -99,6 +110,7 @@ git.on(GitEvent.PACKAGE_ANALYSIS, async (evt: any) => {
     // Payload to be memorized
     mnemonicPayload += line;
 
+    // Part of the message to be sent
     depsList += line + '\n';
   });
 
@@ -153,16 +165,16 @@ git.on(GitEvent.COMMITS, async (evt: any) => {
 
     mnemonicPayload += fallback;
 
-      attachments.push({
+    attachments.push({
       fallback,
-      color: "#2eb886",
+      color: '#2eb886',
       author_name: commit.author,
       author_link: commit.email,
       title: commit.date.toLocaleDateString(ConfigService.params.languageAlt, ConfigService.params.dateConf),
       text: commit.message,
       actions: [
         {
-          type: "button",
+          type: 'button',
           text: actionMsg,
           url: commit.url
         }
@@ -191,9 +203,13 @@ git.on(GitEvent.COMMITS, async (evt: any) => {
   slack.emit(outcomingMessageEvent.type, outcomingMessageEvent.data);
 });
 
+
+// ------------------------------------------------------------------
 //
 // Init/Config routines
-git.setAuth({'bitbucket': ConfigService.params.bitbucketAppPassword});
+git.setAuth({
+  'bitbucket': ConfigService.params.bitbucketAppPassword
+});
 git.initWatch();
 slack.setAuth(
   ConfigService.params.botName,
@@ -201,3 +217,5 @@ slack.setAuth(
   ConfigService.params.slackToken
 );
 slack.connect();
+//
+// ------------------------------------------------------------------

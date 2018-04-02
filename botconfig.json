@@ -4,6 +4,16 @@
   "masterPassphrase": "",
   "slackToken": "",
   "bitbucketAppPassword": "",
+  "stackOverflow": {
+    "registerUrl": "http://stackapps.com/apps/oauth/register",
+    "clientId": "",
+    "clientSecret": "",
+    "clientKey": ""
+  },
+  "google": {
+    "registerUrl": "https://console.developers.google.com/apis",
+    "apiKey": ""
+  },
   "timezone": "Europe/Rome",
   "dateConf": {
     "weekday": "long",

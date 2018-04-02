@@ -2,7 +2,14 @@ import * as events from 'events';
 import * as _ from 'lodash';
 import { MessageProcessedEvent } from '../events';
 import { IUser } from '../models';
-import { GitService, SlackClient } from '../services';
+import {
+  GitService,
+  GoogleService,
+  IGoogleResult,
+  IStackOverflowResult,
+  SlackClient,
+  StackOverflowService
+} from '../services';
 import { en_EN, it_IT } from './dictionaries';
 import { LanguageMemory } from './memory';
 
@@ -11,6 +18,7 @@ interface IResponse {
   user: string;
   channel: string;
   message: string;
+  attachments?: any;
 }
 
 class LanguageProcessor extends events.EventEmitter {
@@ -226,6 +234,66 @@ class LanguageProcessor extends events.EventEmitter {
           user: data.user,
           channel: data.channel,
           message: this.getResponse(user, 'REMOVE_ALL_MESSAGES'),
+        });
+      }),
+
+      /**
+       *
+       */
+      this.getDefaultIntent('SOLVE_PROBLEM', (data: any, problem: string) => {
+        const user: IUser = this.getUserInterface(data);
+
+        // TODO: Handle different kind of problems
+        let promises = [];
+        promises = [
+          new StackOverflowService().searchAnswer(problem, 3),
+          new GoogleService().searchAnswer(problem, 3)
+        ];
+
+        Promise
+          .all(promises)
+          .then((res: any) => {
+            const stackOverflowResults: IStackOverflowResult[] = res[0];
+            const googleResults: IGoogleResult[] = res[1];
+
+            const attachments: any = [];
+            _.each(stackOverflowResults, (result: IStackOverflowResult) => {
+              attachments.push({
+                fallback: '',
+                color: '#2196F3',
+                author_name: 'StackOverflow',
+                author_link: result.url,
+                title: result.title,
+                text: result.tags.join(',')
+              });
+            });
+
+            _.each(googleResults, (result: IGoogleResult) => {
+              attachments.push({
+                fallback: '',
+                color: '#2196F3',
+                author_name: 'Web',
+                author_link: result.url,
+                title: result.title,
+                text: result.summary
+              });
+            });
+
+            this.emitResponse({
+              label: 'SOLVE_PROBLEM',
+              user: data.user,
+              channel: data.channel,
+              message: '',
+              attachments
+            })
+          })
+          .catch(console.error);
+
+        this.emitResponse({
+          label: 'SOLVE_PROBLEM',
+          user: data.user,
+          channel: data.channel,
+          message: this.getResponse(user, 'SOLVE_PROBLEM'),
         });
       }),
 

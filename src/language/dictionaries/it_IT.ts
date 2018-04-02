@@ -11,7 +11,7 @@ export default {
       'segui il repo {repo}',
       'segui questo repo {repo}',
       'segui il repository {repo}',
-      "tieni d'occhio {repo}",
+      'tieni d\'occhio {repo}',
     ],
     slots: [
       {
@@ -33,7 +33,7 @@ export default {
     ],
     slots: [],
     answers: [
-      "Ok, potrei metterci un po'...",
+      'Ok, potrei metterci un po\'...',
       'Va bene, fra poco riceverai un report.',
     ],
   },
@@ -48,7 +48,7 @@ export default {
     ],
     slots: [],
     answers: [
-      "Ok!",
+      'Ok!',
       'Va bene',
       'Lo faccio subito',
     ],
@@ -69,6 +69,25 @@ export default {
       'Ooook!'
     ],
   },
+  SOLVE_PROBLEM: {
+    utterances: [
+      'cosa vuol dire {problem}',
+      'che vuol dire {problem}',
+      'cerca {problem}',
+      'risolvi {problem}',
+    ],
+    slots: [
+      {
+        name: 'problem',
+        type: 'STRING',
+      },
+    ],
+    answers: [
+      'Provo a cercare...',
+      'Vediamo...',
+      'Ok, attendi un attimo',
+    ],
+  },
 
   //
   // Messages from bot to human
@@ -84,7 +103,7 @@ export default {
     answers: [
       'Oops.. qualcosa è andato storto :S',
       'Si è verificato un errore',
-      "Aspetta, c'è qualcosa che non va...",
+      'Aspetta, c\'è qualcosa che non va...',
       'Controlla i log, qualcosa non ha funzionato!',
     ],
   },
@@ -154,6 +173,13 @@ export default {
       'Da un\'occhiata 🔨',
       'Apri 🔨',
       'Maggiori info 🔨'
+    ]
+  },
+  PROBLEM_SOLUTION: {
+    answers: [
+      'Ecco cosa ho trovato\n{solution}',
+      'Ho trovato questo\n{solution}',
+      'Fatto, ecco cosa è risultato\n{solution}'
     ]
   }
 };

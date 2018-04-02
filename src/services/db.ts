@@ -1,9 +1,8 @@
-import * as events from 'events';
 import * as mongoose from 'mongoose';
 import { IPersistedMemory, IRepository, IUser, PersistedMemory, Repository, User } from '../models';
 import { ConfigService } from './';
 
-class Db extends events.EventEmitter {
+class Db {
   public static getInstance(): Db {
     return Db.instance;
   }
@@ -11,8 +10,6 @@ class Db extends events.EventEmitter {
   private static instance: Db = new Db();
 
   constructor(autoConnect: boolean = true) {
-    super();
-
     if (Db.instance) {
       throw new Error(
         'Error: Instantiation failed: Use getInstance() instead of new.'
