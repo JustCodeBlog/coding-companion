@@ -24,17 +24,27 @@ interface IResponse {
 class LanguageProcessor extends events.EventEmitter {
   private nlc: any;
   private dict: any;
-  private memory: LanguageMemory;
 
-  constructor() {
+  private memory: LanguageMemory;
+  private git: GitService;
+  private slack: SlackClient;
+
+  constructor(
+    gitService: GitService,
+    languageMemory: LanguageMemory,
+    slackClient: SlackClient,
+  ) {
     super();
 
     const NLC = require('natural-language-commander');
 
-    this.memory = LanguageMemory.getInstance();
-    this.dict = this.loadDefaultDictionary();
-    this.nlc = new NLC();
+    this.git = gitService;
+    this.slack = slackClient;
+    this.memory = languageMemory;
 
+    this.dict = this.loadDefaultDictionary();
+
+    this.nlc = new NLC();
     this.nlc.registerNotFound((data: any) => {
       const user: IUser = this.getUserInterface(data);
 
@@ -103,6 +113,15 @@ class LanguageProcessor extends events.EventEmitter {
   private emitResponse(data: IResponse) {
     const event: MessageProcessedEvent = new MessageProcessedEvent(data);
     this.emit(event.type, event.data);
+  }
+
+  private emitError(user: IUser, err: any) {
+    this.emitResponse({
+      label: 'ERROR',
+      user: user.user,
+      channel: user.channel,
+      message: this.getResponse(user, 'ERROR'),
+    });
   }
 
   private loadDefaultDictionary(): any {
@@ -177,8 +196,7 @@ class LanguageProcessor extends events.EventEmitter {
       this.getDefaultIntent('WATCH_REPO', (data: any, repo: string) => {
         const user: IUser = this.getUserInterface(data);
 
-        GitService.getInstance()
-          .createRepository(data.user, data.channel, repo)
+        this.git.createRepository(data.user, data.channel, repo)
           .then((res: any) => {
             const label = !res ? 'REPO_EXISTS' : 'WATCH_REPO';
             this.emitResponse({
@@ -188,14 +206,7 @@ class LanguageProcessor extends events.EventEmitter {
               message: this.getResponse(user, label),
             });
           })
-          .catch((err: any) => {
-            this.emitResponse({
-              label: 'ERROR',
-              user: data.user,
-              channel: data.channel,
-              message: this.getResponse(user, 'ERROR'),
-            });
-          });
+          .catch((err: any) => this.emitError(user, err));
       }),
 
       /**
@@ -204,8 +215,9 @@ class LanguageProcessor extends events.EventEmitter {
       this.getDefaultIntent('CHECK_ALL_REPOS', (data: any) => {
         const user: IUser = this.getUserInterface(data);
 
-        GitService.getInstance()
-          .checkAll(data.user);
+        // The "checkAll" will fire an event,
+        // this event is handled in the main controller.
+        this.git.checkAll(data.user);
 
         this.emitResponse({
           label: 'CHECK_ALL_REPOS',
@@ -226,8 +238,7 @@ class LanguageProcessor extends events.EventEmitter {
       this.getDefaultIntent('REMOVE_ALL_MESSAGES', (data: any) => {
         const user: IUser = this.getUserInterface(data);
 
-        SlackClient.getInstance()
-          .deleteAllMessagesFromConversation(data.channel, data.user);
+        this.slack.deleteAllMessagesFromConversation(data.channel, data.user);
 
         this.emitResponse({
           label: 'REMOVE_ALL_MESSAGES',
@@ -244,6 +255,7 @@ class LanguageProcessor extends events.EventEmitter {
         const user: IUser = this.getUserInterface(data);
 
         // TODO: Handle different kind of problems
+        // TODO: Move the construction of the message somewhere else?
         let promises = [];
         promises = [
           new StackOverflowService().searchAnswer(problem, 3),
@@ -257,25 +269,25 @@ class LanguageProcessor extends events.EventEmitter {
             const googleResults: IGoogleResult[] = res[1];
 
             const attachments: any = [];
-            _.each(stackOverflowResults, (result: IStackOverflowResult) => {
-              attachments.push({
-                fallback: '',
-                color: '#2196F3',
-                author_name: 'StackOverflow',
-                author_link: result.url,
-                title: result.title,
-                text: result.tags.join(',')
-              });
-            });
-
             _.each(googleResults, (result: IGoogleResult) => {
               attachments.push({
                 fallback: '',
                 color: '#2196F3',
-                author_name: 'Web',
+                author_name: result.title,
                 author_link: result.url,
-                title: result.title,
+                title: 'Dal web',
                 text: result.summary
+              });
+            });
+
+            _.each(stackOverflowResults, (result: IStackOverflowResult) => {
+              attachments.push({
+                fallback: '',
+                color: '#2196F3',
+                author_name: result.title,
+                author_link: result.url,
+                title: 'Su StackOverflow',
+                text: result.tags.join(',')
               });
             });
 

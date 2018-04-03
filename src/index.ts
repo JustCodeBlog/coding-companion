@@ -17,16 +17,20 @@ import {
   StackOverflowService
 } from './services';
 
-//
-// Define services / clients
-const languageProcessor = new LanguageProcessor();
-const stackOverflowService = new StackOverflowService();
-
 // Singleton objects
 const languageMemory = LanguageMemory.getInstance() as LanguageMemory;
 const slack = SlackClient.getInstance();
 const git: GitService = GitService.getInstance() as GitService;
 const db: Db = Db.getInstance() as Db;
+
+//
+// Define services / clients
+const languageProcessor = new LanguageProcessor(
+  git,
+  languageMemory,
+  slack
+);
+const stackOverflowService = new StackOverflowService();
 
 // Listen on slack client events
 slack.on(IncomingMessageEvent.LABEL, (data: any) => {
@@ -211,6 +215,7 @@ git.setAuth({
   'bitbucket': ConfigService.params.bitbucketAppPassword
 });
 git.initWatch();
+
 slack.setAuth(
   ConfigService.params.botName,
   ConfigService.params.botPicture,
