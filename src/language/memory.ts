@@ -3,18 +3,17 @@ import { IPersistedMemory, IUser } from '../models';
 import { Db } from '../services';
 
 class LanguageMemory {
-
   public static getInstance(): LanguageMemory {
     return LanguageMemory.instance;
   }
 
   private static instance: LanguageMemory = new LanguageMemory();
 
-  private SEED = 0xCAFEBABE;
+  private SEED = 0xcafebabe;
   private XXHash = require('xxhash');
 
   private SHORT_TERM_THRESHOLD = 300000; // 5m
-  private LONG_TERM_THRESHOLD = 86400000 // 1d
+  private LONG_TERM_THRESHOLD = 86400000; // 1d
 
   constructor() {
     if (LanguageMemory.instance) {
@@ -42,7 +41,7 @@ class LanguageMemory {
         accessDate: now,
         creationDate: now,
         user: user.user,
-        channel: user.channel
+        channel: user.channel,
       };
 
       Db.getInstance().createMemory(memory);
@@ -66,7 +65,7 @@ class LanguageMemory {
       Db.getInstance().updateMemory(
         {
           channel: tmpMemory.channel,
-          hash: tmpMemory.hash
+          hash: tmpMemory.hash,
         },
         tmpMemory
       );
@@ -77,7 +76,11 @@ class LanguageMemory {
     return memory;
   }
 
-  public async isRecent(user: IUser, data: string, isLongTerm: boolean = false): Promise<boolean> {
+  public async isRecent(
+    user: IUser,
+    data: string,
+    isLongTerm: boolean = false
+  ): Promise<boolean> {
     const memory: any = await this.getMemoryByContent(user, data);
     let output = false;
 
@@ -93,13 +96,20 @@ class LanguageMemory {
     return output;
   }
 
-  private getMemoryByContent(user: IUser, data: string): Promise<IPersistedMemory> {
+  private getMemoryByContent(
+    user: IUser,
+    data: string
+  ): Promise<IPersistedMemory> {
     const hash = this.XXHash.hash(new Buffer(data), this.SEED);
-    return Db.getInstance().findMemories({$and: [{ channel: user.channel, hash }]});
+    return Db.getInstance().findMemories({
+      $and: [{ channel: user.channel, hash }],
+    });
   }
 
   private async forget() {
-    const memories: IPersistedMemory[] = await Db.getInstance().findMemories({});
+    const memories: IPersistedMemory[] = await Db.getInstance().findMemories(
+      {}
+    );
     _.each(memories, (memory: IPersistedMemory) => {
       const dt = new Date().getTime() - memory.creationDate.getTime();
       if (dt >= this.LONG_TERM_THRESHOLD) {
@@ -107,7 +117,6 @@ class LanguageMemory {
       }
     });
   }
-
 }
 
 export { LanguageMemory, IPersistedMemory };

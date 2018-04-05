@@ -4,7 +4,9 @@ class ConfigService {
   private static locParams: any;
 
   private static loadConf() {
-    ConfigService.locParams = JSON.parse(fs.readFileSync('botconfig.json', 'utf8'));
+    ConfigService.locParams = JSON.parse(
+      fs.readFileSync('botconfig.json', 'utf8')
+    );
   }
 
   constructor() {

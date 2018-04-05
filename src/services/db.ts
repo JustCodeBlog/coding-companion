@@ -1,5 +1,12 @@
 import * as mongoose from 'mongoose';
-import { IPersistedMemory, IRepository, IUser, PersistedMemory, Repository, User } from '../models';
+import {
+  IPersistedMemory,
+  IRepository,
+  IUser,
+  PersistedMemory,
+  Repository,
+  User,
+} from '../models';
 import { ConfigService } from './';
 
 class Db {
@@ -24,7 +31,11 @@ class Db {
   }
 
   public connect() {
-    mongoose.connect(`mongodb://localhost:${ConfigService.params.dbPort}/${ConfigService.params.dbName}`);
+    mongoose.connect(
+      `mongodb://localhost:${ConfigService.params.dbPort}/${
+        ConfigService.params.dbName
+      }`
+    );
   }
 
   public createUser(data: IUser): Promise<any> {
@@ -99,7 +110,7 @@ class Db {
   }
 
   public deleteMemory(hash: string): Promise<any> {
-    return new PersistedMemory().remove({hash});
+    return new PersistedMemory().remove({ hash });
   }
 
   public createRepository(data: IRepository): Promise<any> {
@@ -132,7 +143,7 @@ class Db {
   }
 
   public deleteRepository(url: string) {
-    return new Repository().remove({url});
+    return new Repository().remove({ url });
   }
 
   public findRepositories(where: any): Promise<any> {

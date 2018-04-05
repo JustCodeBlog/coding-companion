@@ -8,7 +8,7 @@ import {
   IGoogleResult,
   IStackOverflowResult,
   SlackClient,
-  StackOverflowService
+  StackOverflowService,
 } from '../services';
 import { en_EN, it_IT } from './dictionaries';
 import { LanguageMemory } from './memory';
@@ -32,7 +32,7 @@ class LanguageProcessor extends events.EventEmitter {
   constructor(
     gitService: GitService,
     languageMemory: LanguageMemory,
-    slackClient: SlackClient,
+    slackClient: SlackClient
   ) {
     super();
 
@@ -60,13 +60,18 @@ class LanguageProcessor extends events.EventEmitter {
     this.registerDialogs();
   }
 
-  public getResponse(user: IUser, label: string, data?: any, tries: number = 0): string {
+  public getResponse(
+    user: IUser,
+    label: string,
+    data?: any,
+    tries: number = 0
+  ): string {
     // TODO: Use "user" for customized messages
 
     const isRecent = async () => {
       const ret = await this.memory.isRecent(user, out);
       return ret;
-    }
+    };
 
     const response = this.dict[label]
       ? this.dict[label].answers
@@ -144,30 +149,31 @@ class LanguageProcessor extends events.EventEmitter {
     const utterances = this.getUtterances(label);
     const slots = this.getSlots(label);
 
-    const callback = typeof cb === 'undefined'
-      ? (data: any) => {
-          const user: IUser = this.getUserInterface(data);
-          this.emitResponse({
-            label,
-            user: data.user,
-            channel: data.channel,
-            message: this.getResponse(user, label),
-          });
-        }
-      : cb;
+    const callback =
+      typeof cb === 'undefined'
+        ? (data: any) => {
+            const user: IUser = this.getUserInterface(data);
+            this.emitResponse({
+              label,
+              user: data.user,
+              channel: data.channel,
+              message: this.getResponse(user, label),
+            });
+          }
+        : cb;
 
     return {
       intent,
       utterances,
       slots,
-      callback
+      callback,
     };
   }
 
   private getUserInterface(data: any): IUser {
     let out: IUser = {
       user: '',
-      channel: ''
+      channel: '',
     };
 
     if (typeof data.user === 'undefined' || data.channel === 'undefined') {
@@ -175,7 +181,7 @@ class LanguageProcessor extends events.EventEmitter {
     } else {
       out = {
         user: data.user,
-        channel: data.channel
+        channel: data.channel,
       };
     }
 
@@ -184,7 +190,6 @@ class LanguageProcessor extends events.EventEmitter {
 
   private registerIntents() {
     const intents = [
-
       /**
        *
        */
@@ -196,7 +201,8 @@ class LanguageProcessor extends events.EventEmitter {
       this.getDefaultIntent('WATCH_REPO', (data: any, repo: string) => {
         const user: IUser = this.getUserInterface(data);
 
-        this.git.createRepository(data.user, data.channel, repo)
+        this.git
+          .createRepository(data.user, data.channel, repo)
           .then((res: any) => {
             const label = !res ? 'REPO_EXISTS' : 'WATCH_REPO';
             this.emitResponse({
@@ -259,11 +265,10 @@ class LanguageProcessor extends events.EventEmitter {
         let promises = [];
         promises = [
           new StackOverflowService().searchAnswer(problem, 3),
-          new GoogleService().searchAnswer(problem, 3)
+          new GoogleService().searchAnswer(problem, 3),
         ];
 
-        Promise
-          .all(promises)
+        Promise.all(promises)
           .then((res: any) => {
             const stackOverflowResults: IStackOverflowResult[] = res[0];
             const googleResults: IGoogleResult[] = res[1];
@@ -276,7 +281,7 @@ class LanguageProcessor extends events.EventEmitter {
                 author_name: result.title,
                 author_link: result.url,
                 title: 'Dal web',
-                text: result.summary
+                text: result.summary,
               });
             });
 
@@ -287,7 +292,7 @@ class LanguageProcessor extends events.EventEmitter {
                 author_name: result.title,
                 author_link: result.url,
                 title: 'Su StackOverflow',
-                text: result.tags.join(',')
+                text: result.tags.join(','),
               });
             });
 
@@ -296,8 +301,8 @@ class LanguageProcessor extends events.EventEmitter {
               user: data.user,
               channel: data.channel,
               message: '',
-              attachments
-            })
+              attachments,
+            });
           })
           .catch(console.error);
 
@@ -308,7 +313,6 @@ class LanguageProcessor extends events.EventEmitter {
           message: this.getResponse(user, 'SOLVE_PROBLEM'),
         });
       }),
-
     ];
 
     _.each(intents, intent => {

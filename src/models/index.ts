@@ -8,5 +8,5 @@ export {
   IPersistedMemory,
   PersistedMemory,
   IUser,
-  User
+  User,
 };

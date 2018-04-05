@@ -11,7 +11,7 @@ export default {
       'segui il repo {repo}',
       'segui questo repo {repo}',
       'segui il repository {repo}',
-      'tieni d\'occhio {repo}',
+      "tieni d'occhio {repo}",
     ],
     slots: [
       {
@@ -33,7 +33,7 @@ export default {
     ],
     slots: [],
     answers: [
-      'Ok, potrei metterci un po\'...',
+      "Ok, potrei metterci un po'...",
       'Va bene, fra poco riceverai un report.',
     ],
   },
@@ -47,26 +47,17 @@ export default {
       'cancella la conversazione',
     ],
     slots: [],
-    answers: [
-      'Ok!',
-      'Va bene',
-      'Lo faccio subito',
-    ],
+    answers: ['Ok!', 'Va bene', 'Lo faccio subito'],
   },
   TEST: {
-    utterances: [
-      'prova',
-      'test',
-      'facciamo una prova',
-      'proviamo',
-    ],
+    utterances: ['prova', 'test', 'facciamo una prova', 'proviamo'],
     slots: [],
     answers: [
-      "Cosa proviamo?",
+      'Cosa proviamo?',
       'Ok, cosa?',
       'Devo fare qualcosa?',
       'Va bene... inizi tu?',
-      'Ooook!'
+      'Ooook!',
     ],
   },
   SOLVE_PROBLEM: {
@@ -82,11 +73,7 @@ export default {
         type: 'STRING',
       },
     ],
-    answers: [
-      'Provo a cercare...',
-      'Vediamo...',
-      'Ok, attendi un attimo',
-    ],
+    answers: ['Provo a cercare...', 'Vediamo...', 'Ok, attendi un attimo'],
   },
 
   //
@@ -103,23 +90,23 @@ export default {
     answers: [
       'Oops.. qualcosa è andato storto :S',
       'Si è verificato un errore',
-      'Aspetta, c\'è qualcosa che non va...',
+      "Aspetta, c'è qualcosa che non va...",
       'Controlla i log, qualcosa non ha funzionato!',
     ],
   },
   IS_RECENT_MEMORY: {
     answers: [
-      'Per quel che ricordo non è cambiato nulla rispetto all\'ultimo messaggio di questo tipo :S',
-      'Da quel che noto non è cambiato nulla rispetto a prima.'
-    ]
+      "Per quel che ricordo non è cambiato nulla rispetto all'ultimo messaggio di questo tipo :S",
+      'Da quel che noto non è cambiato nulla rispetto a prima.',
+    ],
   },
   READ_MORE: {
     answers: [
       'leggi di più',
       'per maggiori info',
       'per più info',
-      'per saperne di più'
-    ]
+      'per saperne di più',
+    ],
   },
   REPO_EXISTS: {
     answers: [
@@ -130,9 +117,7 @@ export default {
     ],
   },
   GIT_REPO_ADVICE: {
-    answers: [
-      'Ecco i risultati per *{repo}*\n',
-    ],
+    answers: ['Ecco i risultati per *{repo}*\n'],
   },
   GIT_VULNERABILITIES: {
     answers: [
@@ -143,13 +128,11 @@ export default {
   },
   GIT_SINGLE_VULNERABILITY: {
     answers: [
-      '*{tree}* => {module} {version} (CVSS Score {cvssScore}) - *fixed* @ {patchedVersion} ℹ️ <{url}|{more}>'
-    ]
+      '*{tree}* => {module} {version} (CVSS Score {cvssScore}) - *fixed* @ {patchedVersion} ℹ️ <{url}|{more}>',
+    ],
   },
   GIT_SINGLE_DEPENDENCY: {
-    answers: [
-      '*{module}* => {version}'
-    ]
+    answers: ['*{module}* => {version}'],
   },
   GIT_DEPENDENCIES_UPDATES: {
     answers: [
@@ -165,21 +148,17 @@ export default {
   },
   GIT_SINGLE_COMMIT: {
     answers: [
-      '{human_date} effettuato da *<mailto:{email}|{committer}>*\n"{message}"'
-    ]
+      '{human_date} effettuato da *<mailto:{email}|{committer}>*\n"{message}"',
+    ],
   },
   GIT_OPEN_COMMIT: {
-    answers: [
-      'Da un\'occhiata 🔨',
-      'Apri 🔨',
-      'Maggiori info 🔨'
-    ]
+    answers: ["Da un'occhiata 🔨", 'Apri 🔨', 'Maggiori info 🔨'],
   },
   PROBLEM_SOLUTION: {
     answers: [
       'Ecco cosa ho trovato\n{solution}',
       'Ho trovato questo\n{solution}',
-      'Fatto, ecco cosa è risultato\n{solution}'
-    ]
-  }
+      'Fatto, ecco cosa è risultato\n{solution}',
+    ],
+  },
 };

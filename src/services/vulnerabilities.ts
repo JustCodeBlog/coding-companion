@@ -18,13 +18,12 @@ class VulnerabilitiesService {
 
       promises = [
         ...promises,
-        request.get(url, {json: true}).catch(err => console.error)
-      ]
+        request.get(url, { json: true }).catch(err => console.error),
+      ];
     });
 
     return Promise.all(promises);
   }
-
 }
 
 export default VulnerabilitiesService;

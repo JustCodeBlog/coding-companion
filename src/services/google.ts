@@ -10,14 +10,14 @@ interface IGoogleResult {
 class GoogleService {
   private googleIt = require('google-it');
 
-  public async searchAnswer(query: string, size: number=10): Promise<any> {
+  public async searchAnswer(query: string, size: number = 10): Promise<any> {
     return new Promise(async (resolve, reject) => {
       let output: IGoogleResult[] = [];
 
       this.googleIt({
         query,
         numResults: size,
-        disableConsole: true
+        disableConsole: true,
       })
         .then((res: any) => {
           _.each(res, (v: any) => {
@@ -26,18 +26,17 @@ class GoogleService {
               {
                 title: v.title,
                 summary: v.snippet,
-                url: v.link
-              }
-            ]
+                url: v.link,
+              },
+            ];
           });
           resolve(output);
-        }).catch((err: any) => {
-          reject(err);
         })
+        .catch((err: any) => {
+          reject(err);
+        });
     });
   }
-
 }
 
 export { GoogleService, IGoogleResult };
-

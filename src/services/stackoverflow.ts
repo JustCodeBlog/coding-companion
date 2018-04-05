@@ -20,14 +20,14 @@ class StackOverflowService {
     this.api = new this.stackexchange(this.apiOptions);
   }
 
-  public async searchAnswer(query: string, size: number=10): Promise<any> {
+  public async searchAnswer(query: string, size: number = 10): Promise<any> {
     const filter = {
       key: ConfigService.params.stackOverflow.clientKey,
       pagesize: size,
       sort: 'activity',
       order: 'desc',
       q: query,
-      wiki: false
+      wiki: false,
     };
 
     return new Promise((resolve, reject) => {
@@ -49,16 +49,15 @@ class StackOverflowService {
               score: item.score,
               creationDate: new Date(item.creation_date),
               title: item.title,
-              url: item.link
-            }
-          ]
+              url: item.link,
+            },
+          ];
         });
 
         resolve(output);
       });
     });
   }
-
 }
 
 export { StackOverflowService, IStackOverflowResult };

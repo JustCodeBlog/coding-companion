@@ -18,7 +18,6 @@ interface ICommit {
 }
 
 class GitService extends events.EventEmitter {
-
   public static getInstance(): GitService {
     return GitService.instance;
   }
@@ -78,25 +77,32 @@ class GitService extends events.EventEmitter {
   }
 
   public stopWatch() {
-    this.jobs.forEach( (job:any) => {
+    this.jobs.forEach((job: any) => {
       job.stop();
     });
   }
 
-  public createRepository(user: string, channel: string, repo: string): Promise<any> {
-    return Db.getInstance()
-      .createRepository({
-        user,
-        channel,
-        url: repo.substring(1, repo.length - 1), // the URL comes in such a format <URL>
-      });
+  public createRepository(
+    user: string,
+    channel: string,
+    repo: string
+  ): Promise<any> {
+    return Db.getInstance().createRepository({
+      user,
+      channel,
+      url: repo.substring(1, repo.length - 1), // the URL comes in such a format <URL>
+    });
   }
 
   public checkAll(user: string) {
     this.doCheck(true, true, user);
   }
 
-  private doCheck(checkDependencies: boolean = true, checkCommits: boolean = true, user?: string) {
+  private doCheck(
+    checkDependencies: boolean = true,
+    checkCommits: boolean = true,
+    user?: string
+  ) {
     const db = Db.getInstance();
     const where = typeof user !== 'undefined' ? { user } : {};
 
@@ -104,7 +110,6 @@ class GitService extends events.EventEmitter {
       .findRepositories(where)
       .then(docs => {
         _.each(docs, (doc: any) => {
-
           const url = doc.url;
           const channel = doc.channel;
           const regExp = this.isGithub(url)
@@ -113,8 +118,11 @@ class GitService extends events.EventEmitter {
           const matches: RegExpMatchArray | null = url.match(regExp);
 
           if (!matches) {
-            const errorEvent = new GitEvent(GitEvent.GIT_ERROR, GitEvent.MSG_ERROR_UNKNOWN_REPO);
-            this.emit(errorEvent.type, {channel, data: errorEvent.data});
+            const errorEvent = new GitEvent(
+              GitEvent.GIT_ERROR,
+              GitEvent.MSG_ERROR_UNKNOWN_REPO
+            );
+            this.emit(errorEvent.type, { channel, data: errorEvent.data });
             return;
           }
 
@@ -124,24 +132,25 @@ class GitService extends events.EventEmitter {
 
           // package.json
           if (checkDependencies) {
-            this.getDependenciesUpdatesAndVulnsFromPackageFile(owner, repo, platform)
-              .then(packageRes => {
-                const event = new GitEvent(GitEvent.PACKAGE_ANALYSIS, packageRes);
-                this.emit(event.type, {channel, repo, data: event.data});
-              });
+            this.getDependenciesUpdatesAndVulnsFromPackageFile(
+              owner,
+              repo,
+              platform
+            ).then(packageRes => {
+              const event = new GitEvent(GitEvent.PACKAGE_ANALYSIS, packageRes);
+              this.emit(event.type, { channel, repo, data: event.data });
+            });
 
             // TODO: Support other dependencies
             // ...
           }
 
           if (checkCommits) {
-            this.getLastCommits(owner, repo, platform)
-              .then(commitsRes => {
-                const event = new GitEvent(GitEvent.COMMITS, commitsRes);
-                this.emit(event.type, {channel, repo, data: event.data});
-              });
+            this.getLastCommits(owner, repo, platform).then(commitsRes => {
+              const event = new GitEvent(GitEvent.COMMITS, commitsRes);
+              this.emit(event.type, { channel, repo, data: event.data });
+            });
           }
-
         });
       })
       .catch(err => {
@@ -154,11 +163,13 @@ class GitService extends events.EventEmitter {
     repo: string,
     platform: string
   ): Promise<any> {
-
     return new Promise((resolve, reject) => {
-      let url = platform === 'github'
-        ? `${GitService.GITHUB_BASEURL}${GitService.GITHUB_CONTENT_ENDPOINT}`
-        : `${GitService.BITBUCKET_BASEURL}${GitService.BITBUCKET_CONTENT_ENDPOINT}`;
+      let url =
+        platform === 'github'
+          ? `${GitService.GITHUB_BASEURL}${GitService.GITHUB_CONTENT_ENDPOINT}`
+          : `${GitService.BITBUCKET_BASEURL}${
+              GitService.BITBUCKET_CONTENT_ENDPOINT
+            }`;
 
       url = url
         .replace('{owner}', owner)
@@ -172,8 +183,10 @@ class GitService extends events.EventEmitter {
           json: true,
         })
         .then(res => {
-
-          const {content, contentStr} = this.getContentFromResponse(res, platform);
+          const { content, contentStr } = this.getContentFromResponse(
+            res,
+            platform
+          );
 
           const dependencies = this.getDependenciesFromPackageFile(content);
           const localRepoPath = `${__dirname}/../../tmp/${owner}_${repo}`;
@@ -181,20 +194,17 @@ class GitService extends events.EventEmitter {
 
           this.storePackageContent(localRepoPath, tmpPackagePath, contentStr);
 
-          Promise
-            .all(
-              [
-                new UpdatesService().getDependenciesUpdates(tmpPackagePath),
-                new VulnerabilitiesService().getDependenciesVulns(dependencies)
-              ]
-            )
+          Promise.all([
+            new UpdatesService().getDependenciesUpdates(tmpPackagePath),
+            new VulnerabilitiesService().getDependenciesVulns(dependencies),
+          ])
             .then(depsRes => {
               this.disposeLocalRepo(localRepoPath);
 
               const updates = depsRes[0];
               const vulns = depsRes[1].filter((v: any) => !_.isEmpty(v))[0];
 
-              resolve({updates, vulns});
+              resolve({ updates, vulns });
             })
             .catch(err => {
               this.disposeLocalRepo(localRepoPath);
@@ -205,7 +215,6 @@ class GitService extends events.EventEmitter {
           reject(err);
         });
     });
-
   }
 
   private getLastCommits(
@@ -213,7 +222,6 @@ class GitService extends events.EventEmitter {
     repo: string,
     platform: string
   ): Promise<any> {
-
     return new Promise((resolve, reject) => {
       let url =
         platform === 'github'
@@ -241,12 +249,9 @@ class GitService extends events.EventEmitter {
                 email: val.commit.committer.email,
                 message: val.commit.message,
                 date: new Date(val.commit.committer.date),
-                url: val.html_url
+                url: val.html_url,
               };
-              commits = [
-                ...commits,
-                commit
-              ]
+              commits = [...commits, commit];
             });
           } else if (platform === 'bitbucket') {
             if (typeof res.values !== 'undefined') {
@@ -256,12 +261,9 @@ class GitService extends events.EventEmitter {
                   email: '',
                   message: val.message.replace('\n', ''),
                   date: new Date(val.date),
-                  url: val.links.html.href
+                  url: val.links.html.href,
                 };
-                commits = [
-                  ...commits,
-                  commit
-                ]
+                commits = [...commits, commit];
               });
             }
           }
@@ -271,7 +273,6 @@ class GitService extends events.EventEmitter {
         .catch(err => {
           reject(err);
         });
-
     });
   }
 
@@ -289,8 +290,8 @@ class GitService extends events.EventEmitter {
     if (platform === 'bitbucket') {
       output = {
         user,
-        'pass': this.bitbucketAppPassword,
-        'sendImmediately': true
+        pass: this.bitbucketAppPassword,
+        sendImmediately: true,
       };
     }
 
@@ -300,8 +301,9 @@ class GitService extends events.EventEmitter {
   private getHeadersByPlatform(platform: string): any {
     return platform === 'github'
       ? {
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0',
+          Accept: 'application/vnd.github.v3+json',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0',
         }
       : {};
   }
@@ -314,19 +316,23 @@ class GitService extends events.EventEmitter {
     });
   }
 
-  private storePackageContent(localRepoPath: string, path: string, body: string) {
+  private storePackageContent(
+    localRepoPath: string,
+    path: string,
+    body: string
+  ) {
     try {
-      if (!fs.existsSync(localRepoPath)){
+      if (!fs.existsSync(localRepoPath)) {
         fs.mkdirSync(localRepoPath);
       }
       fs.writeFileSync(path, body);
-    } catch(err) {
+    } catch (err) {
       console.log(err);
     }
   }
 
   private getDependenciesFromPackageFile(content: any): any[] {
-    return  _.merge({}, content.devDependencies, content.dependencies);
+    return _.merge({}, content.devDependencies, content.dependencies);
   }
 
   private getContentFromResponse(response: any, platform: string): any {
@@ -343,7 +349,6 @@ class GitService extends events.EventEmitter {
 
     return { content, contentStr };
   }
-
 }
 
 export { GitService, ICommit };
