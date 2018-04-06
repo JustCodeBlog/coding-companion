@@ -1,6 +1,12 @@
 import * as events from 'events';
 import * as _ from 'lodash';
 import { MessageProcessedEvent } from '../events';
+import {
+  DefaultIntent,
+  IIntent,
+  IIntentObject,
+  WelcomeIntent,
+} from '../intents';
 import { IUser } from '../models';
 import {
   GitService,
@@ -19,6 +25,16 @@ interface IResponse {
   channel: string;
   message: string;
   attachments?: any;
+}
+
+interface IProcessor {
+  getResponse(user: IUser, label: string, data?: any, tries?: number): string;
+  handleCommand(commandData: any): void;
+  emitResponse(data: IResponse): void;
+  emitError(user: IUser, err: any): void;
+  getUtterances(label: string): string[];
+  getSlots(label: string): any;
+  getUserInterface(data: any): IUser;
 }
 
 class LanguageProcessor extends events.EventEmitter {
@@ -108,19 +124,12 @@ class LanguageProcessor extends events.EventEmitter {
     );
   }
 
-  private hydrateDataInResponse(data: any, message: string): string {
-    _.each(data, (d: any, i: number) => {
-      message = message.replace(new RegExp(`{${i}}`, 'igm'), d);
-    });
-    return message;
-  }
-
-  private emitResponse(data: IResponse) {
+  public emitResponse(data: IResponse) {
     const event: MessageProcessedEvent = new MessageProcessedEvent(data);
     this.emit(event.type, event.data);
   }
 
-  private emitError(user: IUser, err: any) {
+  public emitError(user: IUser, err: any) {
     this.emitResponse({
       label: 'ERROR',
       user: user.user,
@@ -129,49 +138,18 @@ class LanguageProcessor extends events.EventEmitter {
     });
   }
 
-  private loadDefaultDictionary(): any {
-    // TODO: This has to be improved a little bit :)
-    return it_IT.default;
-  }
-
-  private getUtterances(label: string): string[] {
+  public getUtterances(label: string): string[] {
     return this.dict[label] ? this.dict[label].utterances : [];
   }
 
-  private getSlots(label: string): any {
+  public getSlots(label: string): any {
     return this.dict[label] && this.dict[label].slots
       ? this.dict[label].slots
       : [];
   }
 
-  private getDefaultIntent(label: string, cb?: any): any {
-    const intent = label;
-    const utterances = this.getUtterances(label);
-    const slots = this.getSlots(label);
-
-    const callback =
-      typeof cb === 'undefined'
-        ? (data: any) => {
-            const user: IUser = this.getUserInterface(data);
-            this.emitResponse({
-              label,
-              user: data.user,
-              channel: data.channel,
-              message: this.getResponse(user, label),
-            });
-          }
-        : cb;
-
-    return {
-      intent,
-      utterances,
-      slots,
-      callback,
-    };
-  }
-
-  private getUserInterface(data: any): IUser {
-    let out: IUser = {
+  public getUserInterface(data: any): IUser {
+    let output: IUser = {
       user: '',
       channel: '',
     };
@@ -179,13 +157,29 @@ class LanguageProcessor extends events.EventEmitter {
     if (typeof data.user === 'undefined' || data.channel === 'undefined') {
       console.error('Trying to get user interface from invalid source', data);
     } else {
-      out = {
+      output = {
         user: data.user,
         channel: data.channel,
       };
     }
 
-    return out;
+    return output;
+  }
+
+  private hydrateDataInResponse(data: any, message: string): string {
+    _.each(data, (d: any, i: number) => {
+      message = message.replace(new RegExp(`{${i}}`, 'igm'), d);
+    });
+    return message;
+  }
+
+  private loadDefaultDictionary(): any {
+    // TODO: This has to be improved a little bit :)
+    return it_IT.default;
+  }
+
+  private getDefaultIntent(label: string, cb?: any): IIntentObject {
+    return new DefaultIntent(this, label, cb).toObject();
   }
 
   private registerIntents() {
@@ -193,7 +187,12 @@ class LanguageProcessor extends events.EventEmitter {
       /**
        *
        */
-      this.getDefaultIntent('WELCOME'),
+      new WelcomeIntent(this).toObject(),
+
+      /**
+       *
+       */
+      this.getDefaultIntent('TEST'),
 
       /**
        *
@@ -232,11 +231,6 @@ class LanguageProcessor extends events.EventEmitter {
           message: this.getResponse(user, 'CHECK_ALL_REPOS'),
         });
       }),
-
-      /**
-       *
-       */
-      this.getDefaultIntent('TEST'),
 
       /**
        *
@@ -325,4 +319,4 @@ class LanguageProcessor extends events.EventEmitter {
   }
 }
 
-export default LanguageProcessor;
+export { LanguageProcessor, IResponse, IProcessor };

@@ -5,9 +5,9 @@
   "license": "MIT",
   "repository": "",
   "author": {
-    "name": "",
-    "email": "",
-    "url": ""
+    "name": "Marcello Barile",
+    "email": "marcello.barile@gmail.com",
+    "url": "http://marcello.barile.eu"
   },
   "keywords": [
     ""
@@ -43,16 +43,17 @@
     "request-promise": "^4.2.2",
     "rimraf": "^2.6.2",
     "stackexchange-node": "^1.0.1",
-    "xxhash": "^0.2.4"
+    "xxhashjs": "^0.2.2"
   },
   "devDependencies": {
     "@types/cron": "^1.2.1",
     "@types/jest": "^22.0.1",
-    "@types/mongoose": "^5.0.7",
-    "@types/request-promise": "^4.1.41",
     "@types/lodash": "^4.14.104",
+    "@types/mongoose": "^5.0.7",
     "@types/node": "^9.4.7",
+    "@types/request-promise": "^4.1.41",
     "@types/rimraf": "^2.0.2",
+    "@types/xxhashjs": "^0.1.1",
     "coveralls": "^2.0.0",
     "cross-env": "^5.1.4",
     "jest": "^22.0.4",

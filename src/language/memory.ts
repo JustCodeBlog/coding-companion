@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import * as XXH from 'xxhashjs';
 import { IPersistedMemory, IUser } from '../models';
 import { Db } from '../services';
 
@@ -10,7 +11,6 @@ class LanguageMemory {
   private static instance: LanguageMemory = new LanguageMemory();
 
   private SEED = 0xcafebabe;
-  private XXHash = require('xxhash');
 
   private SHORT_TERM_THRESHOLD = 300000; // 5m
   private LONG_TERM_THRESHOLD = 86400000; // 1d
@@ -35,7 +35,7 @@ class LanguageMemory {
       const now = new Date();
       memory = {
         rawData: data,
-        hash: this.XXHash.hash(new Buffer(data), this.SEED),
+        hash: XXH.h32(data, this.SEED).toString(16),
         weight: 0,
         lossCoeff: 0,
         accessDate: now,
@@ -100,7 +100,7 @@ class LanguageMemory {
     user: IUser,
     data: string
   ): Promise<IPersistedMemory> {
-    const hash = this.XXHash.hash(new Buffer(data), this.SEED);
+    const hash = XXH.h32(data, this.SEED).toString(16);
     return Db.getInstance().findMemories({
       $and: [{ channel: user.channel, hash }],
     });
