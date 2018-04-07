@@ -29,10 +29,10 @@ const languageProcessor = new LanguageProcessor(languageMemory);
 const stackOverflowService = new StackOverflowService();
 
 // Listen on slack client events
-slack.on(IncomingMessageEvent.LABEL, (data: any) => {
-  const user: string = data.user;
-  const channel: string = data.channel;
-  const msg: string = data.text;
+slack.on(IncomingMessageEvent.LABEL, (res: any) => {
+  const user: string = res.user;
+  const channel: string = res.channel;
+  const msg: string = res.text;
 
   // This internally performs a check if it does exist
   // TODO: Perform this call only when a first message is sent
@@ -47,13 +47,13 @@ slack.on(IncomingMessageEvent.LABEL, (data: any) => {
 
 //
 // Listen on language processor events
-languageProcessor.on(MessageProcessedEvent.LABEL, (data: any) => {
+languageProcessor.on(MessageProcessedEvent.LABEL, (res: any) => {
   const outcomingMessageEvent: OutcomingMessageEvent = new OutcomingMessageEvent(
     {
-      channel: data.channel,
-      text: data.message,
-      user: data.user,
-      attachments: data.attachments || undefined,
+      channel: res.channel,
+      text: res.message,
+      user: res.user,
+      attachments: res.attachments || undefined,
     }
   );
   slack.emit(outcomingMessageEvent.type, outcomingMessageEvent.data);
@@ -61,20 +61,20 @@ languageProcessor.on(MessageProcessedEvent.LABEL, (data: any) => {
 
 //
 // Listen on Git client events
-git.on(GitEvent.GIT_EVENT, (evt: any) => {
-  console.log('GENERIC GIT EVENT', evt);
+git.on(GitEvent.GIT_EVENT, (res: any) => {
+  console.log('GENERIC GIT EVENT', res);
 });
 
-git.on(GitEvent.GIT_ERROR, (evt: any) => {
-  console.log('GIT ERROR EVENT', evt);
+git.on(GitEvent.GIT_ERROR, (res: any) => {
+  console.log('GIT ERROR EVENT', res);
 });
 
-git.on(GitEvent.PACKAGE_ANALYSIS, async (evt: any) => {
+git.on(GitEvent.PACKAGE_ANALYSIS, async (res: any) => {
   let mnemonicPayload: string = '';
-  const channel = evt.channel;
+  const channel = res.channel;
   const user: IUser[] = await db.findUser({ channel });
-  const repo = evt.repo;
-  const data = evt.data;
+  const repo = res.repo;
+  const data = res.data;
 
   let depsList = '';
   let vulnsList = '';
@@ -147,6 +147,12 @@ git.on(GitEvent.PACKAGE_ANALYSIS, async (evt: any) => {
 
   let outcomingMessageEvent: OutcomingMessageEvent;
   if (await languageMemory.isRecent(user[0], mnemonicPayload, true)) {
+    if (res.isAutomated) {
+      // Say nothing if the response is recent and there is no
+      // direct interaction with the user.
+      return;
+    }
+
     outcomingMessageEvent = new OutcomingMessageEvent({
       channel,
       text: languageProcessor.getResponse(user[0], 'IS_RECENT_MEMORY'),
@@ -158,20 +164,21 @@ git.on(GitEvent.PACKAGE_ANALYSIS, async (evt: any) => {
     });
     languageMemory.store(user[0], mnemonicPayload);
   }
+
   slack.emit(outcomingMessageEvent.type, outcomingMessageEvent.data);
 });
 
-git.on(GitEvent.COMMITS, async (evt: any) => {
+git.on(GitEvent.COMMITS, async (res: any) => {
   let mnemonicPayload: string = '';
-  const channel = evt.channel;
-  const repo = evt.repo;
+  const channel = res.channel;
+  const repo = res.repo;
   const user: IUser[] = await db.findUser({ channel });
   const actionMsg = languageProcessor.getResponse(user[0], 'GIT_OPEN_COMMIT');
 
   const text = languageProcessor.getResponse(user[0], 'GIT_COMMITS', { repo });
 
   const attachments: any = [];
-  _.each(evt.data, (commit: ICommit) => {
+  _.each(res.data, (commit: ICommit) => {
     const fallback = languageProcessor.getResponse(
       user[0],
       'GIT_SINGLE_COMMIT',
@@ -210,6 +217,12 @@ git.on(GitEvent.COMMITS, async (evt: any) => {
 
   let outcomingMessageEvent: OutcomingMessageEvent;
   if (await languageMemory.isRecent(user[0], mnemonicPayload, true)) {
+    if (res.isAutomated) {
+      // Say nothing if the response is recent and there is no
+      // direct interaction with the user.
+      return;
+    }
+
     outcomingMessageEvent = new OutcomingMessageEvent({
       channel,
       text: languageProcessor.getResponse(user[0], 'IS_RECENT_MEMORY'),
@@ -222,6 +235,7 @@ git.on(GitEvent.COMMITS, async (evt: any) => {
     });
     languageMemory.store(user[0], mnemonicPayload);
   }
+
   slack.emit(outcomingMessageEvent.type, outcomingMessageEvent.data);
 });
 

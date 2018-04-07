@@ -7,11 +7,13 @@ class GitEvent {
   public static MSG_ERROR_UNKNOWN_REPO = 'error_unknown-repo';
 
   public type: any;
-  public data: any = {};
+  public data: any;
+  public isAutomated: boolean;
 
-  constructor(label: string, data: any) {
+  constructor(label: string, data: any = {}, isAutomated: boolean = false) {
     this.type = label;
     this.data = data;
+    this.isAutomated = isAutomated;
   }
 }
 

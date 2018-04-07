@@ -12,7 +12,7 @@ class LanguageMemory {
 
   private SEED = 0xcafebabe;
 
-  private SHORT_TERM_THRESHOLD = 300000; // 5m
+  private SHORT_TERM_THRESHOLD = 300000;  // 5m
   private LONG_TERM_THRESHOLD = 86400000; // 1d
 
   constructor() {

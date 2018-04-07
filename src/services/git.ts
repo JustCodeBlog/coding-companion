@@ -57,7 +57,7 @@ class GitService extends events.EventEmitter {
     const checkDependenciesJob = new CronJob({
       cronTime: '00 05 11 * * 1-5',
       onTick: () => {
-        this.doCheck(true, false);
+        this.doCheck(true, false, true);
       },
       start: false,
     });
@@ -66,7 +66,7 @@ class GitService extends events.EventEmitter {
     const checkCommitsJob = new CronJob({
       cronTime: '00 05 15 * * 1-5',
       onTick: () => {
-        this.doCheck(true, false);
+        this.doCheck(true, false, true);
       },
       start: false,
     });
@@ -95,12 +95,13 @@ class GitService extends events.EventEmitter {
   }
 
   public checkAll(user: string) {
-    this.doCheck(true, true, user);
+    this.doCheck(true, true, false, user);
   }
 
   private doCheck(
     checkDependencies: boolean = true,
     checkCommits: boolean = true,
+    isAutomated: boolean = false,
     user?: string
   ) {
     const db = Db.getInstance();
@@ -120,9 +121,10 @@ class GitService extends events.EventEmitter {
           if (!matches) {
             const errorEvent = new GitEvent(
               GitEvent.GIT_ERROR,
-              GitEvent.MSG_ERROR_UNKNOWN_REPO
+              GitEvent.MSG_ERROR_UNKNOWN_REPO,
+              isAutomated
             );
-            this.emit(errorEvent.type, { channel, data: errorEvent.data });
+            this.emit(errorEvent.type, { channel, data: errorEvent.data, isAutomated });
             return;
           }
 
@@ -137,8 +139,8 @@ class GitService extends events.EventEmitter {
               repo,
               platform
             ).then(packageRes => {
-              const event = new GitEvent(GitEvent.PACKAGE_ANALYSIS, packageRes);
-              this.emit(event.type, { channel, repo, data: event.data });
+              const event = new GitEvent(GitEvent.PACKAGE_ANALYSIS, packageRes, isAutomated);
+              this.emit(event.type, { channel, repo, data: event.data, isAutomated });
             });
 
             // TODO: Support other dependencies
@@ -147,8 +149,8 @@ class GitService extends events.EventEmitter {
 
           if (checkCommits) {
             this.getLastCommits(owner, repo, platform).then(commitsRes => {
-              const event = new GitEvent(GitEvent.COMMITS, commitsRes);
-              this.emit(event.type, { channel, repo, data: event.data });
+              const event = new GitEvent(GitEvent.COMMITS, commitsRes, isAutomated);
+              this.emit(event.type, { channel, repo, data: event.data, isAutomated });
             });
           }
         });
