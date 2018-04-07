@@ -22,7 +22,7 @@ class DefaultIntent implements IIntent {
   public slots: any;
   public callback: any;
 
-  private processor: IProcessor | undefined;
+  protected processor: IProcessor | any = {};
 
   constructor(processor: IProcessor, label: string, callback?: any) {
     this.processor = processor;
@@ -31,15 +31,7 @@ class DefaultIntent implements IIntent {
     this.slots = processor.getSlots(label);
     this.callback =
       typeof callback === 'undefined'
-        ? (data: any) => {
-            const user: IUser = processor.getUserInterface(data);
-            processor.emitResponse({
-              label,
-              user: data.user,
-              channel: data.channel,
-              message: processor.getResponse(user, label),
-            });
-          }
+        ? this.action.bind(this)
         : callback;
   }
 
@@ -50,6 +42,30 @@ class DefaultIntent implements IIntent {
       slots: this.slots,
       callback: this.callback,
     };
+  }
+
+  protected action(data: any, ...args: any[]): void {
+    // TODO: Check processor type
+
+    const userInfo: IUser = this.processor.getUserInterface(data);
+    const user: string = userInfo.user;
+    const channel: string = userInfo.channel;
+    const message: string = this.processor.getResponse(userInfo, this.label);
+    this.emitProcessorResponse(user, channel, message);
+  }
+
+  protected emitProcessorResponse(user: string, channel: string, message: string, attachments?: any): void {
+    if (typeof this.processor === 'undefined') {
+      throw new Error('An intent cannot be working without a processor.');
+    }
+
+    this.processor.emitResponse({
+      label: this.label,
+      user,
+      channel,
+      message,
+      attachments,
+    });
   }
 }
 

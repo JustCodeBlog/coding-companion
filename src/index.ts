@@ -25,7 +25,7 @@ const db: Db = Db.getInstance() as Db;
 
 //
 // Define services / clients
-const languageProcessor = new LanguageProcessor(git, languageMemory, slack);
+const languageProcessor = new LanguageProcessor(languageMemory);
 const stackOverflowService = new StackOverflowService();
 
 // Listen on slack client events

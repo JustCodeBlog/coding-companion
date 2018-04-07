@@ -1,11 +1,11 @@
-import { DefaultIntent } from '.';
 import { IProcessor } from '../language/processor';
+import { DefaultIntent } from './defaultIntent';
 
 class WelcomeIntent extends DefaultIntent {
   public static LABEL: string = 'WELCOME';
 
-  constructor(processor: IProcessor, callback?: any) {
-    super(processor, WelcomeIntent.LABEL, callback);
+  constructor(processor: IProcessor) {
+    super(processor, WelcomeIntent.LABEL);
   }
 }
 
