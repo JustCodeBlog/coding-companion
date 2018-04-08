@@ -102,6 +102,18 @@ export default {
       'Da quel che noto non è cambiato nulla rispetto a prima.',
     ],
   },
+  NO_NEW_VULNS_OR_DEPS: {
+    answers: [
+      'Non ci sono nuove vulnerabilità o dipendenze da aggiornare su *{repo}*',
+      'Nessuna nuova vulnerabilità o dipendenza aggiornata su *{repo}*',
+    ]
+  },
+  NO_NEW_COMMIT: {
+    answers: [
+      "Nessun nuovo commit dall'ultima volta su *{repo}*",
+      'Non ho trovato nessuna attività recente su *{repo}*',
+    ]
+  },
   READ_MORE: {
     answers: [
       'leggi di più',

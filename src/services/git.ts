@@ -205,14 +205,14 @@ class GitService extends events.EventEmitter {
               this.disposeLocalRepo(localRepoPath);
 
               let updates: any = [];
-              _.each(depsRes[0], (v: any, i: any) => {
+              _.each(depsRes[0], (v: any, k: any) => {
                 // Reshaping the update entity
                 updates = [
                   ...updates,
                   {
-                    module: i,
+                    module: k,
                     update: v,
-                    current: dependencies[i]
+                    current: dependencies[k]
                   }
                 ];
               });

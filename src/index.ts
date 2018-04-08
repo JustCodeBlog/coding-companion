@@ -155,7 +155,7 @@ git.on(GitEvent.PACKAGE_ANALYSIS, async (res: any) => {
 
     outcomingMessageEvent = new OutcomingMessageEvent({
       channel,
-      text: languageProcessor.getResponse(user[0], 'IS_RECENT_MEMORY'),
+      text: languageProcessor.getResponse(user[0], 'NO_NEW_VULNS_OR_DEPS', { repo }),
     });
   } else {
     outcomingMessageEvent = new OutcomingMessageEvent({
@@ -225,7 +225,7 @@ git.on(GitEvent.COMMITS, async (res: any) => {
 
     outcomingMessageEvent = new OutcomingMessageEvent({
       channel,
-      text: languageProcessor.getResponse(user[0], 'IS_RECENT_MEMORY'),
+      text: languageProcessor.getResponse(user[0], 'NO_NEW_COMMIT', { repo }),
     });
   } else {
     outcomingMessageEvent = new OutcomingMessageEvent({
