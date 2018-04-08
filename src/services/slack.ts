@@ -35,6 +35,7 @@ class SlackClient extends events.EventEmitter {
     this.botName = botName;
     this.botPictureUrl = pictureUrl;
   }
+
   public connect() {
     if (typeof this.token === 'undefined') {
       throw new Error('The slack token is missing.');
@@ -87,7 +88,6 @@ class SlackClient extends events.EventEmitter {
       .then((res: any) => {
         _.each(res.messages, (message: any) => {
           if (message.subtype === 'bot_message') {
-            // Deleting the iterated message
             this.web.chat
               .delete({
                 channel: conversationId,

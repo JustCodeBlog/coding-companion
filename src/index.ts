@@ -108,8 +108,8 @@ git.on(GitEvent.PACKAGE_ANALYSIS, async (res: any) => {
       }) + '\n';
   });
 
-  _.each(data.updates, (update: any, index: any) => {
-    const lineData = { module: index, version: update };
+  _.each(data.updates, (item: any) => {
+    const lineData = { ...item };
     const line = languageProcessor.getResponse(
       user[0],
       'GIT_SINGLE_DEPENDENCY',

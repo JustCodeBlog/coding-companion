@@ -11,9 +11,8 @@ class LanguageMemory {
   private static instance: LanguageMemory = new LanguageMemory();
 
   private SEED = 0xcafebabe;
-
   private SHORT_TERM_THRESHOLD = 300000;  // 5m
-  private LONG_TERM_THRESHOLD = 86400000; // 1d
+  private LONG_TERM_THRESHOLD = 86400000 * 3; // 3d
 
   constructor() {
     if (LanguageMemory.instance) {

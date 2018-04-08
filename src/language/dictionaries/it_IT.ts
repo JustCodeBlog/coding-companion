@@ -39,8 +39,10 @@ export default {
   },
   REMOVE_ALL_MESSAGES: {
     utterances: [
+      'cancella tutti i messaggi',
       'rimuovi tutti i messaggi',
       'cancella tutto',
+      'cancella tutti i nostri messaggi',
       'rimuovi tutti i nostri messaggi',
       'rimuovi la conversazione',
       'cancella la nostra conversazione',
@@ -132,7 +134,7 @@ export default {
     ],
   },
   GIT_SINGLE_DEPENDENCY: {
-    answers: ['*{module}* => {version}'],
+    answers: ['*{module}@{current}* => {update}'],
   },
   GIT_DEPENDENCIES_UPDATES: {
     answers: [

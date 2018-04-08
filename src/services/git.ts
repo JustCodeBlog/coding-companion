@@ -201,9 +201,23 @@ class GitService extends events.EventEmitter {
             new VulnerabilitiesService().getDependenciesVulns(dependencies),
           ])
             .then(depsRes => {
+              // Get rid of the local temp. repo path
               this.disposeLocalRepo(localRepoPath);
 
-              const updates = depsRes[0];
+              let updates: any = [];
+              _.each(depsRes[0], (v: any, i: any) => {
+                // Reshaping the update entity
+                updates = [
+                  ...updates,
+                  {
+                    module: i,
+                    update: v,
+                    current: dependencies[i]
+                  }
+                ];
+              });
+
+              // Filtering empty vuln. entities
               const vulns = depsRes[1].filter((v: any) => !_.isEmpty(v))[0];
 
               resolve({ updates, vulns });
