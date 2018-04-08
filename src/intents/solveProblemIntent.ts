@@ -58,7 +58,7 @@ class SolveProblemIntent extends DefaultIntent {
           });
         });
 
-        this.emitProcessorResponse(user, channel, '');
+        this.emitProcessorResponse(user, channel, '', attachments);
       })
       .catch(console.error);
 
