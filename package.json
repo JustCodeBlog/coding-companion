@@ -37,6 +37,7 @@
     "google-it": "^1.1.1",
     "lodash": "^4.17.5",
     "mongoose": "^5.0.9",
+    "multilang-sentiment": "^1.1.5",
     "natural-language-commander": "^0.1.4",
     "npm-check-updates": "^2.14.1",
     "request": "^2.85.0",
