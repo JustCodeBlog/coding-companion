@@ -155,7 +155,9 @@ git.on(GitEvent.PACKAGE_ANALYSIS, async (res: any) => {
 
     outcomingMessageEvent = new OutcomingMessageEvent({
       channel,
-      text: languageProcessor.getResponse(user[0], 'NO_NEW_VULNS_OR_DEPS', { repo }),
+      text: languageProcessor.getResponse(user[0], 'NO_NEW_VULNS_OR_DEPS', {
+        repo,
+      }),
     });
   } else {
     outcomingMessageEvent = new OutcomingMessageEvent({

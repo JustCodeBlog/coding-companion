@@ -12,8 +12,7 @@ class Repository extends BaseMongoModel {
       user: String,
       channel: String,
       url: String,
-    });
-    this.data = data;
+    }, data);
   }
 }
 

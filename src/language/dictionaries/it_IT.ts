@@ -1,9 +1,9 @@
 export default {
-  //
+  // ----------------------------------------------------------------------------------------------------------
   // Messages from human to bot
   //
   WELCOME: {
-    utterances: ['ciao', 'hola'],
+    utterances: ['ciao', 'hola', 'hey', 'buon giorno', 'buongiorno', 'buondì'],
     answers: ['ciao!', 'hey!', 'hoy :-)', 'hola :D'],
   },
   WATCH_REPO: {
@@ -64,10 +64,19 @@ export default {
   },
   SOLVE_PROBLEM: {
     utterances: [
+      'dimmi chi è {problem}',
+      'sai chi è {problem}',
+      'chi è {problem}',
       'cosa vuol dire {problem}',
       'che vuol dire {problem}',
+      'cosa è un {problem}',
+      'cosa è una {problem}',
+      "cos'è un {problem}",
+      "cos'è una {problem}",
       'cerca {problem}',
       'risolvi {problem}',
+      'quanto fa {problem}',
+      'cacola {problem}',
     ],
     slots: [
       {
@@ -75,10 +84,11 @@ export default {
         type: 'STRING',
       },
     ],
-    answers: ['Provo a cercare...', 'Vediamo...', 'Ok, attendi un attimo'],
+    answers: ['Provo a cercare...', 'Vediamo...', 'Ok, attendi un attimo', 'Arriva!'],
   },
+  // ----------------------------------------------------------------------------------------------------------
 
-  //
+  // ----------------------------------------------------------------------------------------------------------
   // Messages from bot to human
   //
   UNKNOWN: {
@@ -96,6 +106,28 @@ export default {
       'Controlla i log, qualcosa non ha funzionato!',
     ],
   },
+  TELLME_MORE: {
+    answers: [
+      'Dimmi di più perché non ho capito',
+      'Aggiungi qualche dettaglio per favore',
+      'Non riesco a seguirti, cosa intendi?',
+    ],
+  },
+  STIMULATE: {
+    answers: [
+      'Grandioso!',
+      'Bellissimo!!!',
+      'Grandeee',
+      'Che bello quando mi dici così',
+    ],
+  },
+  DENY: {
+    answers: [
+      'Non sono cose da dirsi...',
+      'Ti invito a cambiare tono.',
+      'Non saprei cosa dirti sinceramente.',
+    ],
+  },
   IS_RECENT_MEMORY: {
     answers: [
       "Per quel che ricordo non è cambiato nulla rispetto all'ultimo messaggio di questo tipo :S",
@@ -106,13 +138,13 @@ export default {
     answers: [
       'Non ci sono nuove vulnerabilità o dipendenze da aggiornare su *{repo}*',
       'Nessuna nuova vulnerabilità o dipendenza aggiornata su *{repo}*',
-    ]
+    ],
   },
   NO_NEW_COMMIT: {
     answers: [
       "Nessun nuovo commit dall'ultima volta su *{repo}*",
       'Non ho trovato nessuna attività recente su *{repo}*',
-    ]
+    ],
   },
   READ_MORE: {
     answers: [
@@ -175,4 +207,46 @@ export default {
       'Fatto, ecco cosa è risultato\n{solution}',
     ],
   },
+  // ----------------------------------------------------------------------------------------------------------
+
+  // ----------------------------------------------------------------------------------------------------------
+  // Emotional reactions
+  //
+  ANGRY: {
+    answers: ['😠', '😡', '😤', '😫', '🤬', '👿'],
+  },
+  SAD: {
+    answers: ['😥', '😯', '😕', '🙁', '😞', '😟', '😭'],
+  },
+  HAPPY: {
+    answers: ['😀', '😁', '😃', '😆', '😉', '😊', '🙂', '☺️'],
+  },
+  EXCITED: {
+    answers: ['🤣', '😎', '😍', '😘', '🤗', '🤩'],
+  },
+  NEUTRAL: {
+    answers: ['🤔', '😐', '🤨', '😶', '🙄'],
+  },
+  // ----------------------------------------------------------------------------------------------------------
+
+  // ----------------------------------------------------------------------------------------------------------
+  // Dialogs
+  //
+  NEW_USER: {
+    answers: ["Non ci conosciamo ancora, parlami un po' di te... inizia a dirmi, ad esempio, di cosa ti occupi e quali sono le tecnologie che ti interessano!"],
+    followUp: 'NEW_USER_BOOKMARKS',
+  },
+  NEW_USER_SUCCESS: {
+    answers: ['Ottimo! Grazie 😉'],
+  },
+  NEW_USER_CANCEL: {
+    answers: ['😥 Ok, fa nulla...'],
+  },
+  NEW_USER_FAIL: {
+    answers: ['Mmm... riproviamoci perché mi è sfuggito qualcosa :('],
+  },
+  NEW_USER_BOOKMARKS: {
+    answers: ["Se hai dei siti web che frequenti di solito puoi elencarli qui, gli darò un'occhiata anche io ;)"]
+  },
+  // ----------------------------------------------------------------------------------------------------------
 };

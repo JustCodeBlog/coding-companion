@@ -30,9 +30,7 @@ class DefaultIntent implements IIntent {
     this.utterances = processor.getUtterances(label);
     this.slots = processor.getSlots(label);
     this.callback =
-      typeof callback === 'undefined'
-        ? this.action.bind(this)
-        : callback;
+      typeof callback === 'undefined' ? this.action.bind(this) : callback;
   }
 
   public toObject(): IIntentObject {
@@ -54,7 +52,12 @@ class DefaultIntent implements IIntent {
     this.emitProcessorResponse(user, channel, message);
   }
 
-  protected emitProcessorResponse(user: string, channel: string, message: string, attachments?: any): void {
+  protected emitProcessorResponse(
+    user: string,
+    channel: string,
+    message: string,
+    attachments?: any,
+  ): void {
     if (typeof this.processor === 'undefined') {
       throw new Error('An intent cannot be working without a processor.');
     }

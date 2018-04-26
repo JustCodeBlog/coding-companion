@@ -44,6 +44,7 @@ class Db {
       user
         .find({
           user: data.user,
+          channel: data.channel,
         })
         .then(res => {
           if (res.length === 0) {

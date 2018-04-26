@@ -1,8 +1,6 @@
 import { IProcessor } from '../language/processor';
 import { IUser } from '../models';
-import {
-  GitService,
-} from '../services';
+import { GitService } from '../services';
 import { DefaultIntent } from './defaultIntent';
 
 class WatchRepoIntent extends DefaultIntent {
@@ -24,7 +22,10 @@ class WatchRepoIntent extends DefaultIntent {
       .createRepository(data.user, data.channel, repo)
       .then((res: any) => {
         this.label = !res ? 'REPO_EXISTS' : 'WATCH_REPO';
-        const message: string = this.processor.getResponse(userInfo, this.label);
+        const message: string = this.processor.getResponse(
+          userInfo,
+          this.label
+        );
         this.emitProcessorResponse(user, channel, message);
       })
       .catch((err: any) => this.processor.emitError(userInfo, err));

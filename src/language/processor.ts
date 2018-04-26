@@ -1,5 +1,9 @@
 import * as events from 'events';
 import * as _ from 'lodash';
+import {
+  DefaultDialog,
+  IDialog,
+} from '../dialogs';
 import { MessageProcessedEvent } from '../events';
 import {
   CheckRepoIntent,
@@ -11,9 +15,10 @@ import {
   WatchRepoIntent,
   WelcomeIntent,
 } from '../intents';
-import { IUser } from '../models';
+import { IUser, User } from '../models';
 import { en_EN, it_IT } from './dictionaries';
 import { LanguageMemory } from './memory';
+import { IParsedData, ParsedMessage, Parser } from './parser';
 
 interface IResponse {
   label: string;
@@ -23,47 +28,105 @@ interface IResponse {
   attachments?: any;
 }
 
+interface IInput {
+  user: string;
+  channel: string;
+  input: string;
+}
+
 interface IProcessor {
   getResponse(user: IUser, label: string, data?: any, tries?: number): string;
+  dialogHasFollowUp(label: string): string;
+  startDialog(user: IUser, name: string): void;
+  completeDialog(user: IUser, name: string): void;
   handleCommand(commandData: any): void;
   emitResponse(data: IResponse): void;
   emitError(user: IUser, err: any): void;
   getUtterances(label: string): string[];
   getSlots(label: string): any;
   getUserInterface(data: any): IUser;
+  getUtteranceSentiment(input: string): number;
 }
 
 class LanguageProcessor extends events.EventEmitter {
+  public static POSITIVE_UTTERANCE = [1,5];
+  public static NEUTRAL_UTTERANCE = 0;
+  public static NEGATIVE_UTTERANCE = [-1,-5];
+
   private nlc: any;
   private dict: any;
 
   private memory: LanguageMemory;
+  private parser: Parser;
+  private dialogs: any[] = [];
 
-  constructor(
-    languageMemory: LanguageMemory,
-  ) {
+  constructor(languageMemory: LanguageMemory) {
     super();
 
     const NLC = require('natural-language-commander');
 
     this.memory = languageMemory;
-
     this.dict = this.loadDefaultDictionary();
-
+    this.parser = new Parser();
     this.nlc = new NLC();
-    this.nlc.registerNotFound((data: any) => {
+
+    this.nlc.registerNotFound((data: IInput) => {
       const user: IUser = this.getUserInterface(data);
 
-      this.emitResponse({
-        label: 'UNKNOWN',
-        user: data.user,
-        channel: data.channel,
-        message: this.getResponse(user, 'UNKNOWN'),
-      });
+      if (this.isUserDialoguing(user)) {
+        // Avoid to process the unknown command
+        // if there is a dialog in course.
+        return;
+      }
+
+      this.parser
+        .parseMessage(data.input)
+        .then((parsedMessage: ParsedMessage) => {
+
+          // Constructing an emotional response based on
+          // the polarity of the given input
+          let emotion = 'NEUTRAL';
+          let emotionResponse = 'TELLME_MORE';
+          if (
+            parsedMessage.data.sentiment.score >= -5 &&
+            parsedMessage.data.sentiment.score <= -3
+          ) {
+            emotion = 'ANGRY';
+            emotionResponse = 'DENY';
+          } else if (
+            parsedMessage.data.sentiment.score > -3 &&
+            parsedMessage.data.sentiment.score < 0
+          ) {
+            emotion = 'SAD';
+            emotionResponse = 'DENY';
+          } else if (
+            parsedMessage.data.sentiment.score > 0 &&
+            parsedMessage.data.sentiment.score <= 3
+          ) {
+            emotion = 'HAPPY';
+            emotionResponse = 'STIMULATE';
+          } else if (
+            parsedMessage.data.sentiment.score > 3 &&
+            parsedMessage.data.sentiment.score <= 5
+          ) {
+            emotion = 'EXCITED';
+            emotionResponse = 'STIMULATE';
+          }
+
+          this.emitResponse({
+            label: 'UNKNOWN',
+            user: data.user,
+            channel: data.channel,
+            message: `${this.getResponse(user, emotion)} ${this.getResponse(
+              user,
+              emotionResponse
+            )}`,
+          });
+        })
+        .catch(err => console.error);
     });
 
     this.registerIntents();
-    this.registerDialogs();
   }
 
   public getResponse(
@@ -75,8 +138,7 @@ class LanguageProcessor extends events.EventEmitter {
     // TODO: Use "user" for customized messages
 
     const isRecent = async () => {
-      const ret = await this.memory.isRecent(user, out);
-      return ret;
+      return this.memory.isRecent(user, out);
     };
 
     const response = this.dict[label]
@@ -101,16 +163,43 @@ class LanguageProcessor extends events.EventEmitter {
     return out;
   }
 
+  public dialogHasFollowUp(label: string): string {
+    return this.dict[label].hasOwnProperty('followUp') ? this.dict[label].followUp : undefined;
+  }
+
   public handleCommand(commandData: any) {
     const { user, channel, command } = commandData;
-    this.nlc.handleCommand(
-      // This object will be sent to every intent callback func.
-      {
-        user,
-        channel,
-      },
-      command,
-    );
+    const oUser: IUser = { user, channel };
+    const userModel: User = new User(oUser);
+    const input: IInput = {
+      user,
+      channel,
+      input: command,
+    };
+
+    if (this.isUserDialoguing(oUser)) {
+      // Redirect all commands towards the ongoing dialog
+      this.getDialog(oUser).handleAnswer(command);
+    } else {
+      // Use NLC to process the command
+      this.nlc.handleCommand(
+        // This object will be sent to every intent callback func.
+        input,
+        command
+      );
+
+      // If the user is unknown let's start
+      // a first dialog
+      userModel.isAck()
+        .then(res => {
+          if (!res) {
+            userModel.setAck();
+            this.startDialog(oUser, 'NEW_USER');
+          }
+        })
+        .catch(err => console.error);
+
+    }
   }
 
   public emitResponse(data: IResponse) {
@@ -128,17 +217,39 @@ class LanguageProcessor extends events.EventEmitter {
   }
 
   public getUtterances(label: string): string[] {
-    return this.dict[label]
-      ? this.dict[label].utterances
-      : [];
+    return this.dict[label] ? this.dict[label].utterances : [];
+  }
+
+  public getUtteranceSentiment(message: string): number {
+    return this.parser.getSentiment(message).score;
   }
 
   public getSlots(label: string): any {
     return this.dict[label] && this.dict[label].slots
-      ? this.dict[label].slots
-      : [];
+    ? this.dict[label].slots
+    : [];
   }
 
+  public startDialog(user: IUser, name: string): void {
+    const dialog: IDialog = new DefaultDialog(this, user, name);
+    dialog.start();
+
+    this.dialogs = [
+      ...this.dialogs,
+      dialog
+    ];
+  }
+
+  public completeDialog(user: IUser, name: string): void {
+    this.dialogs = _.filter(this.dialogs, (dialog: IDialog) => dialog.user.channel !== user.channel && dialog.name !== name);
+  }
+
+  /**
+   * Returns a user interface if the input, no
+   * matters what it is, contains the user and
+   * channel properties
+   * @param data The input object
+   */
   public getUserInterface(data: any): IUser {
     let output: IUser = {
       user: '',
@@ -171,29 +282,11 @@ class LanguageProcessor extends events.EventEmitter {
 
   private registerIntents() {
     const intents = [
-      /**
-       *
-       */
       new DefaultIntent(this, 'TEST').toObject(),
-      /**
-       *
-       */
       new WelcomeIntent(this).toObject(),
-      /**
-       *
-       */
       new WatchRepoIntent(this).toObject(),
-      /**
-       *
-       */
       new CheckRepoIntent(this).toObject(),
-      /**
-       *
-       */
       new RemoveMessageIntent(this).toObject(),
-      /**
-       *
-       */
       new SolveProblemIntent(this).toObject(),
     ];
 
@@ -202,8 +295,18 @@ class LanguageProcessor extends events.EventEmitter {
     });
   }
 
-  private registerDialogs() {
-    // TODO: TBD
+  private isUserDialoguing(user: IUser) {
+    let output = false;
+    _.each(this.dialogs, (dialog: IDialog) => {
+      if (dialog.user.channel === user.channel) {
+        output = true;
+        return true;
+      }
+    });
+    return output;
+  }
+  private getDialog(user: IUser): IDialog {
+    return _.filter(this.dialogs, (dialog: IDialog) => dialog.user.channel === user.channel)[0];
   }
 }
 

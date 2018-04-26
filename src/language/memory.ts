@@ -1,3 +1,7 @@
+/**
+ * TODO: Move everything in the model
+ */
+
 import * as _ from 'lodash';
 import * as XXH from 'xxhashjs';
 import { IPersistedMemory, IUser } from '../models';
@@ -11,7 +15,7 @@ class LanguageMemory {
   private static instance: LanguageMemory = new LanguageMemory();
 
   private SEED = 0xcafebabe;
-  private SHORT_TERM_THRESHOLD = 300000;  // 5m
+  private SHORT_TERM_THRESHOLD = 300000; // 5m
   private LONG_TERM_THRESHOLD = 86400000 * 3; // 3d
 
   constructor() {
@@ -91,7 +95,6 @@ class LanguageMemory {
     }
 
     // console.log('is "%s" recent = %s', data, output, memory[0]);
-
     return output;
   }
 

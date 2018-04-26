@@ -1,8 +1,6 @@
 import { IProcessor } from '../language/processor';
 import { IUser } from '../models';
-import {
-  GitService,
-} from '../services';
+import { GitService } from '../services';
 import { DefaultIntent } from './defaultIntent';
 
 class CheckRepoIntent extends DefaultIntent {

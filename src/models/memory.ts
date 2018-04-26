@@ -22,8 +22,7 @@ class PersistedMemory extends BaseMongoModel {
       lossCoeff: Number,
       accessDate: Date,
       creationDate: Date,
-    });
-    this.data = data;
+    }, data);
   }
 }
 

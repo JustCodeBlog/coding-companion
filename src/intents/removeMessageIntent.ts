@@ -1,8 +1,6 @@
 import { IProcessor } from '../language/processor';
 import { IUser } from '../models';
-import {
-  SlackClient,
-} from '../services';
+import { SlackClient } from '../services';
 import { DefaultIntent } from './defaultIntent';
 
 class RemoveMessageIntent extends DefaultIntent {
@@ -19,8 +17,7 @@ class RemoveMessageIntent extends DefaultIntent {
     const user: string = userInfo.user;
     const channel: string = userInfo.channel;
 
-    SlackClient.getInstance()
-      .deleteAllMessagesFromConversation(channel, user);
+    SlackClient.getInstance().deleteAllMessagesFromConversation(channel, user);
 
     const message: string = this.processor.getResponse(userInfo, this.label);
     this.emitProcessorResponse(user, channel, message);

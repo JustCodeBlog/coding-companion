@@ -124,7 +124,11 @@ class GitService extends events.EventEmitter {
               GitEvent.MSG_ERROR_UNKNOWN_REPO,
               isAutomated
             );
-            this.emit(errorEvent.type, { channel, data: errorEvent.data, isAutomated });
+            this.emit(errorEvent.type, {
+              channel,
+              data: errorEvent.data,
+              isAutomated,
+            });
             return;
           }
 
@@ -139,8 +143,17 @@ class GitService extends events.EventEmitter {
               repo,
               platform
             ).then(packageRes => {
-              const event = new GitEvent(GitEvent.PACKAGE_ANALYSIS, packageRes, isAutomated);
-              this.emit(event.type, { channel, repo, data: event.data, isAutomated });
+              const event = new GitEvent(
+                GitEvent.PACKAGE_ANALYSIS,
+                packageRes,
+                isAutomated
+              );
+              this.emit(event.type, {
+                channel,
+                repo,
+                data: event.data,
+                isAutomated,
+              });
             });
 
             // TODO: Support other dependencies
@@ -149,8 +162,17 @@ class GitService extends events.EventEmitter {
 
           if (checkCommits) {
             this.getLastCommits(owner, repo, platform).then(commitsRes => {
-              const event = new GitEvent(GitEvent.COMMITS, commitsRes, isAutomated);
-              this.emit(event.type, { channel, repo, data: event.data, isAutomated });
+              const event = new GitEvent(
+                GitEvent.COMMITS,
+                commitsRes,
+                isAutomated
+              );
+              this.emit(event.type, {
+                channel,
+                repo,
+                data: event.data,
+                isAutomated,
+              });
             });
           }
         });
@@ -212,8 +234,8 @@ class GitService extends events.EventEmitter {
                   {
                     module: k,
                     update: v,
-                    current: dependencies[k]
-                  }
+                    current: dependencies[k],
+                  },
                 ];
               });
 
