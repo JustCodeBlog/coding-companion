@@ -3,6 +3,7 @@ import * as _ from 'lodash';
 import {
   DefaultDialog,
   IDialog,
+  NewUserDialog,
 } from '../dialogs';
 import { MessageProcessedEvent } from '../events';
 import {
@@ -37,6 +38,7 @@ interface IInput {
 interface IProcessor {
   getResponse(user: IUser, label: string, data?: any, tries?: number): string;
   dialogHasFollowUp(label: string): string;
+  getDialogKnowledgeLabel(label: string): string;
   startDialog(user: IUser, name: string): void;
   completeDialog(user: IUser, name: string): void;
   handleCommand(commandData: any): void;
@@ -53,6 +55,7 @@ class LanguageProcessor extends events.EventEmitter {
   public static NEUTRAL_UTTERANCE = 0;
   public static NEGATIVE_UTTERANCE = [-1,-5];
 
+  private sleep: any;
   private nlc: any;
   private dict: any;
 
@@ -65,6 +68,7 @@ class LanguageProcessor extends events.EventEmitter {
 
     const NLC = require('natural-language-commander');
 
+    this.sleep = require('sleep-async')().Promise;
     this.memory = languageMemory;
     this.dict = this.loadDefaultDictionary();
     this.parser = new Parser();
@@ -167,6 +171,10 @@ class LanguageProcessor extends events.EventEmitter {
     return this.dict[label].hasOwnProperty('followUp') ? this.dict[label].followUp : undefined;
   }
 
+  public getDialogKnowledgeLabel(label: string): string {
+    return this.dict[label].hasOwnProperty('knowledgeLabel') ? this.dict[label].knowledgeLabel : undefined;
+  }
+
   public handleCommand(commandData: any) {
     const { user, channel, command } = commandData;
     const oUser: IUser = { user, channel };
@@ -179,7 +187,8 @@ class LanguageProcessor extends events.EventEmitter {
 
     if (this.isUserDialoguing(oUser)) {
       // Redirect all commands towards the ongoing dialog
-      this.getDialog(oUser).handleAnswer(command);
+      const tokens = this.parser.getTokens(command);
+      this.getDialog(oUser).handleAnswer(command, tokens);
     } else {
       // Use NLC to process the command
       this.nlc.handleCommand(
@@ -203,8 +212,15 @@ class LanguageProcessor extends events.EventEmitter {
   }
 
   public emitResponse(data: IResponse) {
-    const event: MessageProcessedEvent = new MessageProcessedEvent(data);
-    this.emit(event.type, event.data);
+    // We use a random sleep time to avoid
+    // immediate responses which perceived to be
+    // too much artificial.
+    this.sleep
+    .sleep((Math.random() * 250) + 250)
+    .then(() => {
+      const event: MessageProcessedEvent = new MessageProcessedEvent(data);
+      this.emit(event.type, event.data);
+    });
   }
 
   public emitError(user: IUser, err: any) {
@@ -231,7 +247,7 @@ class LanguageProcessor extends events.EventEmitter {
   }
 
   public startDialog(user: IUser, name: string): void {
-    const dialog: IDialog = new DefaultDialog(this, user, name);
+    const dialog: IDialog = new NewUserDialog(this, user, name);
     dialog.start();
 
     this.dialogs = [

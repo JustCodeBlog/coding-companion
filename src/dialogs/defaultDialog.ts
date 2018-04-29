@@ -5,7 +5,7 @@ interface IDialog {
   user: IUser;
   name: string;
   start(): void;
-  handleAnswer(answer: string): void;
+  handleAnswer(answer: string, tokens: any[]): void;
 }
 
 class DefaultDialog implements IDialog {
@@ -15,15 +15,16 @@ class DefaultDialog implements IDialog {
   protected startedAt: Date | undefined;
   protected processor: IProcessor | any = {};
 
-  private SUCCESS_LABEL: string;
-  private CANCEL_LABEL: string;
-  private FAIL_LABEL: string;
-  private TTL: number = 120000; // 2 mins.
-  private ttlTimeout: any;
+  protected SUCCESS_LABEL: string;
+  protected CANCEL_LABEL: string;
+  protected FAIL_LABEL: string;
+  protected TTL: number = 120000; // 2 mins.
+  protected ttlTimeout: any;
 
-  private hasFollowUp: boolean = false;
-  private consumedFollowUp: boolean = false;
-  private lastAnswerTime: number = 0;
+  protected hasFollowUp: boolean = false;
+  protected consumedFollowUp: boolean = false;
+  protected lastAnswerTime: number = 0;
+  protected utteranceIndex: number = 0;
 
   constructor(
     processor: IProcessor,
@@ -47,11 +48,15 @@ class DefaultDialog implements IDialog {
     }
   }
 
-  public handleAnswer(answer: string): void {
+  public handleAnswer(answer: string, tokens: any[]): void {
     this.lastAnswerTime = new Date().getTime();
 
     if (this.validateAnswer(answer)) {
       const followUp = this.processor.dialogHasFollowUp(this.name);
+
+      const knowledgeLabel = this.hasFollowUp
+        ? this.processor.getDialogKnowledgeLabel(followUp)
+        : this.processor.getDialogKnowledgeLabel(this.name);
 
       if (typeof followUp !== 'undefined' && !this.consumedFollowUp) {
         // If the dialog has a follow up which has not been yet consumed
@@ -60,18 +65,7 @@ class DefaultDialog implements IDialog {
         this.consumedFollowUp = true;
         this.handleInternalOperation(followUp, this.user);
       } else {
-        const sentimentScore = this.processor.getUtteranceSentiment(answer);
-        // In case of negative answer we avoid
-        // to display a positive answer, taking by granted
-        // that the user want to cancel (quit) the dialog
-        if (
-          sentimentScore >= LanguageProcessor.NEGATIVE_UTTERANCE[1]
-          && sentimentScore <= LanguageProcessor.NEGATIVE_UTTERANCE[0]
-        ) {
-          this.handleInternalOperation(this.CANCEL_LABEL, this.user);
-        } else {
-          this.handleInternalOperation(this.SUCCESS_LABEL, this.user);
-        }
+        this.handleInternalOperation(this.SUCCESS_LABEL, this.user);
         this.complete();
       }
     } else {
@@ -108,7 +102,7 @@ class DefaultDialog implements IDialog {
     });
   }
 
-  private handleInternalOperation(label: string, data: any, ...args: any[]):void {
+  protected handleInternalOperation(label: string, data: any, ...args: any[]):void {
     // TODO: Check processor type
     const userInfo: IUser = this.processor.getUserInterface(data);
     const user: string = userInfo.user;
@@ -117,7 +111,7 @@ class DefaultDialog implements IDialog {
     this.emitProcessorResponse(user, channel, message);
   }
 
-  private complete(): void {
+  protected complete(): void {
     this.processor.completeDialog(this.user, this.name);
     this.stopTimeout();
   }

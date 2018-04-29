@@ -26,10 +26,28 @@ class User extends BaseMongoModel {
     });
   }
 
+  public saveInterests(data: any): Promise<any> {
+    return this.update({
+      user: this.data.user,
+      channel: this.data.channel
+    }, {
+      interests: data
+    });
+  }
+
   public getBookmarks(): Promise<string[]> {
     return this.getProperty('bookmarks', {
       user: this.data.user,
       channel: this.data.channel
+    });
+  }
+
+  public saveBookmarks(data: any): Promise<any> {
+    return this.update({
+      user: this.data.user,
+      channel: this.data.channel
+    }, {
+      bookmarks: data
     });
   }
 

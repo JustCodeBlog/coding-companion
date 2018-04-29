@@ -234,19 +234,21 @@ export default {
   //
   NEW_USER: {
     answers: ["Non ci conosciamo ancora, parlami un po' di te... inizia a dirmi, ad esempio, di cosa ti occupi e quali sono le tecnologie che ti interessano!"],
+    knowledgeLabel: 'interests',
     followUp: 'NEW_USER_BOOKMARKS',
   },
+  NEW_USER_BOOKMARKS: {
+    knowledgeLabel: 'bookmarks',
+    answers: ["Se hai dei siti web che frequenti di solito puoi elencarli qui, gli darò un'occhiata anche io ;)"]
+  },
   NEW_USER_SUCCESS: {
-    answers: ['Ottimo! Grazie 😉'],
+    answers: ['Ottimo! Grazie 😉', 'bene :-)', 'ooook!'],
   },
   NEW_USER_CANCEL: {
-    answers: ['😥 Ok, fa nulla...'],
+    answers: ['😥 Ok, fa nulla...', 'ok ok fa nulla', 'va bene, fa nulla'],
   },
   NEW_USER_FAIL: {
     answers: ['Mmm... riproviamoci perché mi è sfuggito qualcosa :('],
-  },
-  NEW_USER_BOOKMARKS: {
-    answers: ["Se hai dei siti web che frequenti di solito puoi elencarli qui, gli darò un'occhiata anche io ;)"]
   },
   // ----------------------------------------------------------------------------------------------------------
 };
