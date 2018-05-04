@@ -3,6 +3,7 @@ import {
   GitEvent,
   IncomingMessageEvent,
   MessageProcessedEvent,
+  NewsEvent,
   OutcomingMessageEvent,
 } from './events';
 import { LanguageMemory, LanguageProcessor } from './language';
@@ -12,7 +13,9 @@ import {
   Db,
   GitService,
   ICommit,
+  INews,
   IStackOverflowResult,
+  NewsService,
   SlackClient,
   StackOverflowService,
 } from './services';
@@ -22,6 +25,7 @@ const languageMemory = LanguageMemory.getInstance() as LanguageMemory;
 const slack = SlackClient.getInstance();
 const git: GitService = GitService.getInstance() as GitService;
 const db: Db = Db.getInstance() as Db;
+const news: NewsService = NewsService.getInstance() as NewsService;
 
 //
 // Define services / clients
@@ -64,11 +68,9 @@ languageProcessor.on(MessageProcessedEvent.LABEL, (res: any) => {
 git.on(GitEvent.GIT_EVENT, (res: any) => {
   console.log('GENERIC GIT EVENT', res);
 });
-
 git.on(GitEvent.GIT_ERROR, (res: any) => {
   console.log('GIT ERROR EVENT', res);
 });
-
 git.on(GitEvent.PACKAGE_ANALYSIS, async (res: any) => {
   let mnemonicPayload: string = '';
   const channel = res.channel;
@@ -79,15 +81,15 @@ git.on(GitEvent.PACKAGE_ANALYSIS, async (res: any) => {
   let depsList = '';
   let vulnsList = '';
 
-  _.each(data.vulns, vuln => {
+  _.each(data.vulns, (item: any) => {
     // Payload to be memorized
     mnemonicPayload += languageProcessor.getResponse(
       user[0],
       'GIT_SINGLE_VULNERABILITY',
       {
-        tree: vuln.path[0],
-        module: vuln.module,
-        version: vuln.version,
+        tree: item.path[0],
+        module: item.module,
+        version: item.version,
         cvssScore: '',
         patchedVersion: '',
         url: '',
@@ -98,12 +100,12 @@ git.on(GitEvent.PACKAGE_ANALYSIS, async (res: any) => {
     // Part of the message to be sent
     vulnsList +=
       languageProcessor.getResponse(user[0], 'GIT_SINGLE_VULNERABILITY', {
-        tree: vuln.path[0],
-        module: vuln.module,
-        version: vuln.version,
-        cvssScore: vuln.cvss_score,
-        patchedVersion: vuln.patched_versions,
-        url: vuln.advisory,
+        tree: item.path[0],
+        module: item.module,
+        version: item.version,
+        cvssScore: item.cvss_score,
+        patchedVersion: item.patched_versions,
+        url: item.advisory,
         more: languageProcessor.getResponse(user[0], 'READ_MORE'),
       }) + '\n';
   });
@@ -169,7 +171,6 @@ git.on(GitEvent.PACKAGE_ANALYSIS, async (res: any) => {
 
   slack.emit(outcomingMessageEvent.type, outcomingMessageEvent.data);
 });
-
 git.on(GitEvent.COMMITS, async (res: any) => {
   let mnemonicPayload: string = '';
   const channel = res.channel;
@@ -180,18 +181,18 @@ git.on(GitEvent.COMMITS, async (res: any) => {
   const text = languageProcessor.getResponse(user[0], 'GIT_COMMITS', { repo });
 
   const attachments: any = [];
-  _.each(res.data, (commit: ICommit) => {
+  _.each(res.data, (item: ICommit) => {
     const fallback = languageProcessor.getResponse(
       user[0],
       'GIT_SINGLE_COMMIT',
       {
-        human_date: commit.date.toLocaleDateString(
+        human_date: item.date.toLocaleDateString(
           ConfigService.params.languageAlt,
           ConfigService.params.dateConf
         ),
-        committer: commit.author,
-        email: commit.email,
-        message: commit.message,
+        committer: item.author,
+        email: item.email,
+        message: item.message,
       }
     );
 
@@ -200,18 +201,18 @@ git.on(GitEvent.COMMITS, async (res: any) => {
     attachments.push({
       fallback,
       color: '#2eb886',
-      author_name: commit.author,
-      author_link: commit.email,
-      title: commit.date.toLocaleDateString(
+      author_name: item.author,
+      author_link: item.email,
+      title: item.date.toLocaleDateString(
         ConfigService.params.languageAlt,
         ConfigService.params.dateConf
       ),
-      text: commit.message,
+      text: item.message,
       actions: [
         {
           type: 'button',
           text: actionMsg,
-          url: commit.url,
+          url: item.url,
         },
       ],
     });
@@ -241,6 +242,62 @@ git.on(GitEvent.COMMITS, async (res: any) => {
   slack.emit(outcomingMessageEvent.type, outcomingMessageEvent.data);
 });
 
+//
+// Listen on News events
+news.on(NewsEvent.NEWS_EVENT, async (res: any) => {
+  let mnemonicPayload: string = '';
+
+  const channel = res.channel;
+  const user: IUser[] = await db.findUser({ channel });
+  const actionMsg = languageProcessor.getResponse(user[0], 'OPEN_NEWS');
+  const data = res.data;
+
+  const text = languageProcessor.getResponse(user[0], 'NEWS');
+
+  const attachments: any = [];
+  _.each(res.data, (item: INews) => {
+    const fallback = languageProcessor.getResponse(
+      user[0],
+      'SINGLE_NEWS',
+      {
+        title: item.title,
+        source: item.source,
+        description: item.description,
+        url: item.url
+      }
+    );
+
+    mnemonicPayload += fallback;
+
+    attachments.push({
+      fallback,
+      color: '#333',
+      author_name: `${item.source} - ${item.publishedAt}`,
+      author_link: item.url,
+      title: item.title,
+      text: item.description,
+      actions: [
+        {
+          type: 'button',
+          text: actionMsg,
+          url: item.url,
+        },
+      ],
+    });
+  });
+
+  let outcomingMessageEvent: OutcomingMessageEvent;
+  if (!(await languageMemory.isRecent(user[0], mnemonicPayload, true))) {
+    outcomingMessageEvent = new OutcomingMessageEvent({
+      channel,
+      text,
+      attachments,
+    });
+    languageMemory.store(user[0], mnemonicPayload);
+    slack.emit(outcomingMessageEvent.type, outcomingMessageEvent.data);
+  }
+});
+
 // ------------------------------------------------------------------
 //
 // Init/Config routines
@@ -248,6 +305,7 @@ git.setAuth({
   bitbucket: ConfigService.params.bitbucketAppPassword,
 });
 git.initWatch();
+news.initWatch();
 
 slack.setAuth(
   ConfigService.params.botName,

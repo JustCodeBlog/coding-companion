@@ -207,6 +207,19 @@ export default {
       'Fatto, ecco cosa è risultato\n{solution}',
     ],
   },
+  NEWS: {
+    answers: [
+      'Ecco degli articoli che potrebbero interessarti...',
+      'Ti sto per mandare degli articoli che forse ti interesseranno',
+      'Ci sono degli articoli che secondo me ti possono interessare.',
+    ],
+  },
+  SINGLE_NEWS: {
+    answers: ['[{source}] {title} - {description} ({url})'],
+  },
+  OPEN_NEWS: {
+    answers: ['apri la notizia', 'leggi la notizia', "apri l\'articolo"],
+  },
   // ----------------------------------------------------------------------------------------------------------
 
   // ----------------------------------------------------------------------------------------------------------

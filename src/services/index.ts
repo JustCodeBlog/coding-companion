@@ -2,6 +2,7 @@ import { ConfigService } from './config';
 import Db from './db';
 import { GitService, ICommit } from './git';
 import { GoogleService, IGoogleResult } from './google';
+import { INews, NewsService } from './news';
 import SlackClient from './slack';
 import { IStackOverflowResult, StackOverflowService } from './stackoverflow';
 import UpdatesService from './updates';
@@ -19,4 +20,6 @@ export {
   StackOverflowService,
   GoogleService,
   IGoogleResult,
+  NewsService,
+  INews,
 };

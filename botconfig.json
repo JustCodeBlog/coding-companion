@@ -14,6 +14,10 @@
     "registerUrl": "https://console.developers.google.com/apis",
     "apiKey": ""
   },
+  "newsApi": {
+    "registerUrl": "https://newsapi.org/register",
+    "apiKey": ""
+  },
   "wolfram": {
     "registerUrl": "https://developer.wolframalpha.com/portal/myapps/index.html",
     "appId": ""
@@ -30,6 +34,7 @@
   "language": "it_IT",
   "languageAlt": "it-IT",
   "locale": "it",
+  "newsLocale": "it",
   "dbName": "coding-companion",
   "dbPort": 27017
 }

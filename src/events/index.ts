@@ -1,6 +1,7 @@
 import { GitEvent } from './gitEvent';
 import { IncomingMessageEvent } from './incomingMessageEvent';
 import { MessageProcessedEvent } from './messageProcessedEvent';
+import { NewsEvent } from './newsEvent';
 import { OutcomingMessageEvent } from './outcomingMessageEvent';
 
 export {
@@ -8,4 +9,5 @@ export {
   IncomingMessageEvent,
   OutcomingMessageEvent,
   MessageProcessedEvent,
+  NewsEvent,
 };

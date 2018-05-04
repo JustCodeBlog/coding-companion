@@ -38,6 +38,19 @@ class Db {
     );
   }
 
+  public findUser(where: any): Promise<any> {
+    return new User().find(where);
+  }
+
+  public findMemories(where: any): Promise<any> {
+    return new PersistedMemory().find(where);
+  }
+
+  public findRepositories(where: any): Promise<any> {
+    return new Repository().find(where);
+  }
+
+  // TODO: Use model class
   public createUser(data: IUser): Promise<any> {
     const user = new User(data);
     return new Promise((resolve, reject) => {
@@ -50,13 +63,13 @@ class Db {
           if (res.length === 0) {
             // If not existing
             user
-              .save(data)
-              .then(saved => {
-                resolve(saved);
-              })
-              .catch(err => {
-                reject(err);
-              });
+            .save(data)
+            .then(saved => {
+              resolve(saved);
+            })
+            .catch(err => {
+              reject(err);
+            });
           } else {
             // It does already exist
             resolve(false);
@@ -65,17 +78,11 @@ class Db {
         .catch(err => {
           reject(err);
         });
-    });
+      });
   }
 
-  public findUser(where: any): Promise<any> {
-    return new User().find(where);
-  }
 
-  public findMemories(where: any): Promise<any> {
-    return new PersistedMemory().find(where);
-  }
-
+  // TODO: Use model class
   public createMemory(data: IPersistedMemory): Promise<any> {
     const memory = new PersistedMemory(data);
     return new Promise((resolve, reject) => {
@@ -106,14 +113,17 @@ class Db {
     });
   }
 
+  // TODO: Use model class
   public updateMemory(where: any, data: IPersistedMemory): Promise<any> {
     return new PersistedMemory().update(where, data);
   }
 
+  // TODO: Use model class
   public deleteMemory(hash: string): Promise<any> {
     return new PersistedMemory().remove({ hash });
   }
 
+  // TODO: Use model class
   public createRepository(data: IRepository): Promise<any> {
     const repo = new Repository(data);
     return new Promise((resolve, reject) => {
@@ -143,13 +153,11 @@ class Db {
     });
   }
 
+  // TODO: Use model class
   public deleteRepository(url: string) {
     return new Repository().remove({ url });
   }
 
-  public findRepositories(where: any): Promise<any> {
-    return new Repository().find(where);
-  }
 }
 
 export default Db;
