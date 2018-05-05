@@ -23,12 +23,13 @@
     "lint": "tslint --force --format verbose \"src/**/*.ts\"",
     "prepare": "npm run build",
     "prebuild": "npm run clean && npm run format && npm run lint && echo Using TypeScript && tsc --version",
+    "postbuild": "cpx botconfig.json lib",
     "build": "tsc --pretty",
     "test": "jest",
     "coverage": "jest --coverage",
     "watch": "npm run build -- --watch",
     "watch:test": "jest --watch",
-    "start": "npm run prebuild && npm run prepare && node --icu-data-dir=node_modules/full-icu lib/index.js"
+    "start": "npm run prebuild && npm run prepare && node --icu-data-dir=node_modules/full-icu lib/index.js && npm run postbuild"
   },
   "dependencies": {
     "@slack/client": "^4.1.0",
@@ -62,6 +63,7 @@
     "@types/rimraf": "^2.0.2",
     "@types/xxhashjs": "^0.1.1",
     "coveralls": "^2.0.0",
+    "cpx": "^1.5.0",
     "cross-env": "^5.1.4",
     "jest": "^22.4.3",
     "jest-environment-node-debug": "^2.0.0",
