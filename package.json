@@ -29,7 +29,8 @@
     "coverage": "jest --coverage",
     "watch": "npm run build -- --watch",
     "watch:test": "jest --watch",
-    "start": "npm run prebuild && npm run prepare && node --icu-data-dir=node_modules/full-icu lib/index.js && npm run postbuild"
+    "start:dev": "npm run prebuild && npm run prepare && npm start && npm run postbuild",
+    "start": "node --icu-data-dir=node_modules/full-icu lib/index.js"
   },
   "dependencies": {
     "@slack/client": "^4.1.0",

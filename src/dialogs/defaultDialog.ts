@@ -26,17 +26,13 @@ class DefaultDialog implements IDialog {
   protected lastAnswerTime: number = 0;
   protected utteranceIndex: number = 0;
 
-  constructor(
-    processor: IProcessor,
-    user: IUser,
-    name: string,
-  ) {
+  constructor(processor: IProcessor, user: IUser, name: string) {
     this.processor = processor;
     this.user = user;
     this.name = name;
     this.SUCCESS_LABEL = `${this.name}_SUCCESS`;
-    this.CANCEL_LABEL  = `${this.name}_CANCEL`;
-    this.FAIL_LABEL  = `${this.name}_FAIL`;
+    this.CANCEL_LABEL = `${this.name}_CANCEL`;
+    this.FAIL_LABEL = `${this.name}_FAIL`;
   }
 
   public start(...args: any[]): void {
@@ -77,9 +73,12 @@ class DefaultDialog implements IDialog {
 
   protected validateAnswer(input: string): boolean {
     const sentimentScore = this.processor.getUtteranceSentiment(input);
-    return input !== '' && !(
-      sentimentScore >= LanguageProcessor.NEGATIVE_UTTERANCE[1]
-      && sentimentScore <= LanguageProcessor.NEGATIVE_UTTERANCE[0]
+    return (
+      input !== '' &&
+      !(
+        sentimentScore >= LanguageProcessor.NEGATIVE_UTTERANCE[1] &&
+        sentimentScore <= LanguageProcessor.NEGATIVE_UTTERANCE[0]
+      )
     );
   }
 
@@ -87,7 +86,7 @@ class DefaultDialog implements IDialog {
     user: string,
     channel: string,
     message: string,
-    attachments?: any,
+    attachments?: any
   ): void {
     if (typeof this.processor === 'undefined') {
       throw new Error('A dialog cannot be working without a processor.');
@@ -102,7 +101,11 @@ class DefaultDialog implements IDialog {
     });
   }
 
-  protected handleInternalOperation(label: string, data: any, ...args: any[]):void {
+  protected handleInternalOperation(
+    label: string,
+    data: any,
+    ...args: any[]
+  ): void {
     // TODO: Check processor type
     const userInfo: IUser = this.processor.getUserInterface(data);
     const user: string = userInfo.user;

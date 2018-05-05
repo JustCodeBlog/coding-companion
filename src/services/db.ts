@@ -52,7 +52,11 @@ class Db {
 
   // TODO: Use model class
   public createUser(data: IUser): Promise<any> {
+    data.ack = false;
+    data.bookmarks = [];
+    data.interests = [];
     const user = new User(data);
+
     return new Promise((resolve, reject) => {
       user
         .find({
@@ -63,13 +67,13 @@ class Db {
           if (res.length === 0) {
             // If not existing
             user
-            .save(data)
-            .then(saved => {
-              resolve(saved);
-            })
-            .catch(err => {
-              reject(err);
-            });
+              .save(data)
+              .then(saved => {
+                resolve(saved);
+              })
+              .catch(err => {
+                reject(err);
+              });
           } else {
             // It does already exist
             resolve(false);
@@ -78,9 +82,8 @@ class Db {
         .catch(err => {
           reject(err);
         });
-      });
+    });
   }
-
 
   // TODO: Use model class
   public createMemory(data: IPersistedMemory): Promise<any> {
@@ -157,7 +160,6 @@ class Db {
   public deleteRepository(url: string) {
     return new Repository().remove({ url });
   }
-
 }
 
 export default Db;

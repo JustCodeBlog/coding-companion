@@ -56,7 +56,7 @@ class DefaultIntent implements IIntent {
     user: string,
     channel: string,
     message: string,
-    attachments?: any,
+    attachments?: any
   ): void {
     if (typeof this.processor === 'undefined') {
       throw new Error('An intent cannot be working without a processor.');

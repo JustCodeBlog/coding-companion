@@ -84,7 +84,12 @@ export default {
         type: 'STRING',
       },
     ],
-    answers: ['Provo a cercare...', 'Vediamo...', 'Ok, attendi un attimo', 'Arriva!'],
+    answers: [
+      'Provo a cercare...',
+      'Vediamo...',
+      'Ok, attendi un attimo',
+      'Arriva!',
+    ],
   },
   // ----------------------------------------------------------------------------------------------------------
 
@@ -218,7 +223,7 @@ export default {
     answers: ['[{source}] {title} - {description} ({url})'],
   },
   OPEN_NEWS: {
-    answers: ['apri la notizia', 'leggi la notizia', "apri l\'articolo"],
+    answers: ['apri la notizia', 'leggi la notizia', "apri l'articolo"],
   },
   // ----------------------------------------------------------------------------------------------------------
 
@@ -246,13 +251,17 @@ export default {
   // Dialogs
   //
   NEW_USER: {
-    answers: ["Non ci conosciamo ancora, parlami un po' di te... inizia a dirmi, ad esempio, di cosa ti occupi e quali sono le tecnologie che ti interessano!"],
+    answers: [
+      "Non ci conosciamo ancora, parlami un po' di te... inizia a dirmi, ad esempio, di cosa ti occupi e quali sono le tecnologie che ti interessano!",
+    ],
     knowledgeLabel: 'interests',
     followUp: 'NEW_USER_BOOKMARKS',
   },
   NEW_USER_BOOKMARKS: {
     knowledgeLabel: 'bookmarks',
-    answers: ["Se hai dei siti web che frequenti di solito puoi elencarli qui, gli darò un'occhiata anche io ;)"]
+    answers: [
+      "Se hai dei siti web che frequenti di solito puoi elencarli qui, gli darò un'occhiata anche io ;)",
+    ],
   },
   NEW_USER_SUCCESS: {
     answers: ['Ottimo! Grazie 😉', 'bene :-)', 'ooook!'],

@@ -5,7 +5,7 @@ class ConfigService {
 
   private static loadConf() {
     ConfigService.locParams = JSON.parse(
-      fs.readFileSync(`${__dirname}/../../botconfig.json`, 'utf8')
+      fs.readFileSync(`${__dirname}/../botconfig.json`, 'utf8')
     );
   }
 

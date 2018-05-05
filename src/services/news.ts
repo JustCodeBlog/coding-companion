@@ -59,9 +59,7 @@ class NewsService extends events.EventEmitter {
     });
   }
 
-  private async doCheck(
-    user?: string
-  ) {
+  private async doCheck(user?: string) {
     const db = Db.getInstance();
     const where = typeof user !== 'undefined' ? { user } : {};
     const users: IUser[] = await db.findUser(user);
@@ -73,36 +71,42 @@ class NewsService extends events.EventEmitter {
       }
 
       const query: string = interests.join(' OR ');
-      this.newsApi.v2.everything({
-        q: query,
-        language: ConfigService.params.newsLocale,
-        from: DateTime.local().minus({days: 2}).startOf('day').toISODate(),
-        to: DateTime.local().endOf('day').toISODate(),
-        sortBy: 'relevancy'
-      })
-      .then((res: any) => {
-        let news: INews[] = [];
-        _.each(res.articles, (vv: any) => {
-          news = [
-            ...news,
-            {
-              user: v.user,
-              source: vv.source.name,
-              title: vv.title,
-              description: vv.description,
-              publishedAt: new Date(vv.publishedAt),
-              url: vv.url
-            }
-          ];
-        });
+      this.newsApi.v2
+        .everything({
+          q: query,
+          language: ConfigService.params.newsLocale,
+          from: DateTime.local()
+            .minus({ days: 2 })
+            .startOf('day')
+            .toISODate(),
+          to: DateTime.local()
+            .endOf('day')
+            .toISODate(),
+          sortBy: 'relevancy',
+        })
+        .then((res: any) => {
+          let news: INews[] = [];
+          _.each(res.articles, (vv: any) => {
+            news = [
+              ...news,
+              {
+                user: v.user,
+                source: vv.source.name,
+                title: vv.title,
+                description: vv.description,
+                publishedAt: new Date(vv.publishedAt),
+                url: vv.url,
+              },
+            ];
+          });
 
-        const event: NewsEvent = new NewsEvent(NewsEvent.NEWS_EVENT, news);
-        this.emit(event.type, {
-          channel: v.channel,
-          data: event.data,
-        });
-      })
-      .catch(console.error);
+          const event: NewsEvent = new NewsEvent(NewsEvent.NEWS_EVENT, news);
+          this.emit(event.type, {
+            channel: v.channel,
+            data: event.data,
+          });
+        })
+        .catch(console.error);
     });
   }
 }

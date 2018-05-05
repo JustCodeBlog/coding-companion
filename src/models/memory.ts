@@ -13,16 +13,20 @@ interface IPersistedMemory {
 
 class PersistedMemory extends BaseMongoModel {
   constructor(data?: IPersistedMemory) {
-    super('Memories', {
-      user: String,
-      channel: String,
-      rawData: String,
-      hash: String,
-      weight: Number,
-      lossCoeff: Number,
-      accessDate: Date,
-      creationDate: Date,
-    }, data);
+    super(
+      'Memories',
+      {
+        user: String,
+        channel: String,
+        rawData: String,
+        hash: String,
+        weight: Number,
+        lossCoeff: Number,
+        accessDate: Date,
+        creationDate: Date,
+      },
+      data
+    );
   }
 }
 

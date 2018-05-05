@@ -14,7 +14,9 @@ class Parser {
   constructor() {
     const Tokenizer = require('wink-tokenizer');
     this.sentiment = require('multilang-sentiment');
-    this.stopWords = require('../dictionaries/stopWords_all').default[ConfigService.params.locale];
+    this.stopWords = require('../dictionaries/stopWords_all').default[
+      ConfigService.params.locale
+    ];
     this.tokenizer = new Tokenizer();
   }
 
@@ -37,9 +39,9 @@ class Parser {
     const tokens: any[] = this.tokenizer.tokenize(input);
     _.each(tokens, (token: any) => {
       if (this.isStopWord(token.value)) {
-        token.tag = "stopword";
+        token.tag = 'stopword';
       }
-    })
+    });
     return tokens;
   }
 

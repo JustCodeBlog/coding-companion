@@ -256,16 +256,12 @@ news.on(NewsEvent.NEWS_EVENT, async (res: any) => {
 
   const attachments: any = [];
   _.each(res.data, (item: INews) => {
-    const fallback = languageProcessor.getResponse(
-      user[0],
-      'SINGLE_NEWS',
-      {
-        title: item.title,
-        source: item.source,
-        description: item.description,
-        url: item.url
-      }
-    );
+    const fallback = languageProcessor.getResponse(user[0], 'SINGLE_NEWS', {
+      title: item.title,
+      source: item.source,
+      description: item.description,
+      url: item.url,
+    });
 
     mnemonicPayload += fallback;
 

@@ -1,10 +1,6 @@
 import * as events from 'events';
 import * as _ from 'lodash';
-import {
-  DefaultDialog,
-  IDialog,
-  NewUserDialog,
-} from '../dialogs';
+import { DefaultDialog, IDialog, NewUserDialog } from '../dialogs';
 import { MessageProcessedEvent } from '../events';
 import {
   CheckRepoIntent,
@@ -51,9 +47,9 @@ interface IProcessor {
 }
 
 class LanguageProcessor extends events.EventEmitter {
-  public static POSITIVE_UTTERANCE = [1,5];
+  public static POSITIVE_UTTERANCE = [1, 5];
   public static NEUTRAL_UTTERANCE = 0;
-  public static NEGATIVE_UTTERANCE = [-1,-5];
+  public static NEGATIVE_UTTERANCE = [-1, -5];
 
   private sleep: any;
   private nlc: any;
@@ -86,7 +82,6 @@ class LanguageProcessor extends events.EventEmitter {
       this.parser
         .parseMessage(data.input)
         .then((parsedMessage: ParsedMessage) => {
-
           // Constructing an emotional response based on
           // the polarity of the given input
           let emotion = 'NEUTRAL';
@@ -168,14 +163,18 @@ class LanguageProcessor extends events.EventEmitter {
   }
 
   public dialogHasFollowUp(label: string): string {
-    return this.dict[label].hasOwnProperty('followUp') ? this.dict[label].followUp : undefined;
+    return this.dict[label].hasOwnProperty('followUp')
+      ? this.dict[label].followUp
+      : undefined;
   }
 
   public getDialogKnowledgeLabel(label: string): string {
-    return this.dict[label].hasOwnProperty('knowledgeLabel') ? this.dict[label].knowledgeLabel : undefined;
+    return this.dict[label].hasOwnProperty('knowledgeLabel')
+      ? this.dict[label].knowledgeLabel
+      : undefined;
   }
 
-  public handleCommand(commandData: any) {
+  public async handleCommand(commandData: any) {
     const { user, channel, command } = commandData;
     const oUser: IUser = { user, channel };
     const userModel: User = new User(oUser);
@@ -190,24 +189,19 @@ class LanguageProcessor extends events.EventEmitter {
       const tokens = this.parser.getTokens(command);
       this.getDialog(oUser).handleAnswer(command, tokens);
     } else {
-      // Use NLC to process the command
-      this.nlc.handleCommand(
-        // This object will be sent to every intent callback func.
-        input,
-        command
-      );
-
       // If the user is unknown let's start
       // a first dialog
-      userModel.isAck()
-        .then(res => {
-          if (!res) {
-            userModel.setAck();
-            this.startDialog(oUser, 'NEW_USER');
-          }
-        })
-        .catch(err => console.error);
-
+      if (!(await userModel.isAck())) {
+        userModel.setAck();
+        this.startDialog(oUser, 'NEW_USER');
+      } else {
+        // Use NLC to process the command
+        this.nlc.handleCommand(
+          // This object will be sent to every intent callback func.
+          input,
+          command
+        );
+      }
     }
   }
 
@@ -215,9 +209,7 @@ class LanguageProcessor extends events.EventEmitter {
     // We use a random sleep time to avoid
     // immediate responses which perceived to be
     // too much artificial.
-    this.sleep
-    .sleep((Math.random() * 250) + 250)
-    .then(() => {
+    this.sleep.sleep(Math.random() * 250 + 250).then(() => {
       const event: MessageProcessedEvent = new MessageProcessedEvent(data);
       this.emit(event.type, event.data);
     });
@@ -242,22 +234,23 @@ class LanguageProcessor extends events.EventEmitter {
 
   public getSlots(label: string): any {
     return this.dict[label] && this.dict[label].slots
-    ? this.dict[label].slots
-    : [];
+      ? this.dict[label].slots
+      : [];
   }
 
   public startDialog(user: IUser, name: string): void {
     const dialog: IDialog = new NewUserDialog(this, user, name);
     dialog.start();
 
-    this.dialogs = [
-      ...this.dialogs,
-      dialog
-    ];
+    this.dialogs = [...this.dialogs, dialog];
   }
 
   public completeDialog(user: IUser, name: string): void {
-    this.dialogs = _.filter(this.dialogs, (dialog: IDialog) => dialog.user.channel !== user.channel && dialog.name !== name);
+    this.dialogs = _.filter(
+      this.dialogs,
+      (dialog: IDialog) =>
+        dialog.user.channel !== user.channel && dialog.name !== name
+    );
   }
 
   /**
@@ -322,7 +315,10 @@ class LanguageProcessor extends events.EventEmitter {
     return output;
   }
   private getDialog(user: IUser): IDialog {
-    return _.filter(this.dialogs, (dialog: IDialog) => dialog.user.channel === user.channel)[0];
+    return _.filter(
+      this.dialogs,
+      (dialog: IDialog) => dialog.user.channel === user.channel
+    )[0];
   }
 }
 

@@ -6,11 +6,7 @@ import { DefaultDialog } from './';
 class NewUserDialog extends DefaultDialog {
   private userModel: User;
 
-  constructor(
-    processor: IProcessor,
-    user: IUser,
-    name: string,
-  ) {
+  constructor(processor: IProcessor, user: IUser, name: string) {
     super(processor, user, name);
     this.userModel = new User(user);
   }
