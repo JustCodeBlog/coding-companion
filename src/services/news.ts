@@ -43,8 +43,7 @@ class NewsService extends events.EventEmitter {
 
   public initWatch() {
     const job = new CronJob({
-      // cronTime: '00 30 16 */2 * *',
-      cronTime: '00 * * * * *',
+      cronTime: '00 30 16 */2 * *',
       onTick: () => {
         this.doCheck();
       },
@@ -77,7 +76,7 @@ class NewsService extends events.EventEmitter {
       this.newsApi.v2.everything({
         q: query,
         language: ConfigService.params.newsLocale,
-        from: DateTime.local().startOf('day').toISODate(),
+        from: DateTime.local().minus({days: 2}).startOf('day').toISODate(),
         to: DateTime.local().endOf('day').toISODate(),
         sortBy: 'relevancy'
       })
